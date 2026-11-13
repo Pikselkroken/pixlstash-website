@@ -75,5 +75,6 @@ run `node screenshots/extract-script.mjs` to refresh `script.json`.
 
 - **Pages**: source *GitHub Actions*, custom domain `pixlstash.dev`.
 - **Environment `github-pages`**: deployment from tags allowed (a tag rule `*`).
-- **Actions**: "Allow GitHub Actions to create and approve pull requests", for
-  the release update.
+- **Secret `RELEASE_BOT_TOKEN`**: a token that may write contents and pull
+  requests here, for the release update. The organisation does not let the
+  default Actions token open pull requests.

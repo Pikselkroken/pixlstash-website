@@ -143,7 +143,10 @@ jobs:
       - name: Open pull request
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
-          token: ${{ github.token }}
+          # The organisation does not let the default token open pull
+          # requests, so this needs the same bot token the app repo uses.
+          # A pull request opened with it also gets CI.
+          token: ${{ secrets.RELEASE_BOT_TOKEN }}
           base: main
           branch: bot/release-${{ needs.generate.outputs.tag }}
           commit-message: "Site update for ${{ needs.generate.outputs.tag }}"
