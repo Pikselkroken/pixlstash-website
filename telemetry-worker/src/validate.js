@@ -16,7 +16,7 @@ export const MAX_BODY_BYTES = 512;
  *
  * `dev` is a machine declaring itself as one of ours (PIXLSTASH_INSTALL_TYPE=dev);
  * it is accepted so the ping is not rejected, and excluded downstream rather
- * than here. Keep in step with `Server.INSTALL_TYPES` — tests/test_install_type_buckets.py
+ * than here. Keep in step with `Server.INSTALL_TYPES` in the app — scripts/check_against_app.py
  * fails if they drift.
  */
 export const INSTALL_TYPES = Object.freeze(["docker", "pip", "electron", "other", "dev"]);

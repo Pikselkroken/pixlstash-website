@@ -1,0 +1,109 @@
+name: Deploy pixlstash.dev
+
+# Pushing a tag deploys that tag as pixlstash.dev. Deploy a tag again (a
+# rollback, or to refresh /prerelease/) by hand:
+#
+#   gh workflow run deploy.yml --ref v2.0.0
+on:
+  push:
+    tags:
+      - '**'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      # main carries copy for a version that may not be out yet, so a branch
+      # never becomes the stable site.
+      - name: Refuse anything but a tag
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Run this on a tag: gh workflow run deploy.yml --ref <tag>"
+          exit 1
+
+      - name: Check out the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      # Every deploy replaces the whole site, so /prerelease/ is rebuilt on
+      # each run: from main, when the app has a release candidate newer than
+      # its stable release, and as a redirect otherwise. A broken RC half must
+      # not stop the stable site deploying: on any failure from here to
+      # Assemble site the mirror falls back to the redirect, and the last step
+      # turns the run red after the deploy.
+      - name: List the app's releases
+        id: list
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo Pikselkroken/pixlstash --limit 50 \
+            --json tagName,isPrerelease,isDraft > "$RUNNER_TEMP/releases.json"
+
+      - name: Select release candidate
+        id: select
+        continue-on-error: true
+        run: |
+          python3 scripts/build_prerelease_site.py select \
+            --releases-json "$RUNNER_TEMP/releases.json"
+
+      - name: Check out main for the release-candidate mirror
+        if: steps.select.outputs.tag != ''
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: rc
+          sparse-checkout: site
+          persist-credentials: false
+
+      - name: Assemble site
+        id: assemble
+        env:
+          RC_TAG: ${{ steps.select.outputs.tag }}
+        run: |
+          cp -r site _site
+          if [ -n "$RC_TAG" ] && ! python3 scripts/build_prerelease_site.py build \
+              --site-dir _site --rc-website rc/site --tag "$RC_TAG"; then
+            echo "::error::Could not build the $RC_TAG mirror; deploying without it."
+            echo "rc_failed=true" >> "$GITHUB_OUTPUT"
+            RC_TAG=""
+          fi
+          if [ -z "$RC_TAG" ]; then
+            python3 scripts/build_prerelease_site.py build --site-dir _site
+          fi
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      - name: Fail if the release-candidate mirror was dropped
+        if: >-
+          steps.list.outcome == 'failure' ||
+          steps.select.outcome == 'failure' ||
+          steps.assemble.outputs.rc_failed == 'true'
+        run: |
+          echo "::error::The stable site deployed, but /prerelease/ is a redirect. See the failed step above."
+          exit 1

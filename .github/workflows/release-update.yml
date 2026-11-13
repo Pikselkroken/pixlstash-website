@@ -1,0 +1,165 @@
+name: Update the site for an app release
+
+# Opens a pull request with what a PixlStash release changes on the site: its
+# API reference, the version manifests the app's update check reads, and the
+# training recipes. Merging it publishes nothing; tagging does (deploy.yml).
+#
+# Runs by itself a few times a day and does nothing unless the app's latest
+# release is newer than site/latest-version.json. To run it now, or to
+# regenerate the pages of an older release:
+#
+#   gh workflow run release-update.yml -f tag=v2.0.0
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'App release tag (e.g. v1.2.3). Empty: the latest release.'
+        required: false
+
+permissions: {}
+
+env:
+  APP_REPO: Pikselkroken/pixlstash
+  # The PixlStash this workflow imports reports itself as ours, never as a
+  # real install.
+  PIXLSTASH_TELEMETRY_DEV: '1'
+
+jobs:
+  # Runs the release's code, so it holds no write permission: what it
+  # generates crosses to the job that opens the pull request as an artifact.
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      run: ${{ steps.resolve.outputs.run }}
+    steps:
+      - name: Check out the site
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Resolve the release
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_INPUT: ${{ inputs.tag }}
+        run: |
+          TAG="$TAG_INPUT"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --repo "$APP_REPO" --json tagName --jq .tagName)
+          fi
+          # Release candidates and dev releases publish nothing here.
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Not a plain vX.Y.Z release tag: $TAG"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [ -n "$TAG_INPUT" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ "v$(jq -r .version site/latest-version.json)" = "$TAG" ]; then
+            echo "The site already publishes $TAG."
+          elif gh api "repos/$GITHUB_REPOSITORY/branches/bot/release-$TAG" > /dev/null 2>&1; then
+            echo "A bot/release-$TAG branch exists, so $TAG already has a pull request. Run this by hand with the tag to redo it."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out the app at the release
+        if: steps.resolve.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.APP_REPO }}
+          ref: ${{ steps.resolve.outputs.tag }}
+          path: release
+          persist-credentials: false
+
+      - name: Check the site against the release
+        if: steps.resolve.outputs.run == 'true'
+        run: python3 scripts/check_against_app.py --app release
+
+      - name: Set up Python
+        if: steps.resolve.outputs.run == 'true'
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+
+      - name: Install the release
+        if: steps.resolve.outputs.run == 'true'
+        run: |
+          python -m pip install --upgrade pip packaging
+          pip install ./release
+
+      - name: Generate versioned OpenAPI docs
+        if: steps.resolve.outputs.run == 'true'
+        run: python release/scripts/generate_openapi_docs.py --output-dir site/api
+
+      - name: Update the version manifests and training recipes
+        if: steps.resolve.outputs.run == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.resolve.outputs.tag }}
+        run: python scripts/update_for_release.py --app release --tag "$RELEASE_TAG"
+
+      - name: Hand the generated files to the pull-request job
+        if: steps.resolve.outputs.run == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: generated
+          retention-days: 1
+          path: |
+            site/api
+            site/latest-version.json
+            site/latest-version
+            site/training-presets
+
+  pull-request:
+    needs: generate
+    if: needs.generate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out the site
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      # Replaced whole, so a file the release no longer ships goes away.
+      - name: Drop the generated directories
+        run: rm -rf site/api site/latest-version site/training-presets
+
+      - name: Take the generated files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: generated
+          path: site
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: bot/release-${{ needs.generate.outputs.tag }}
+          commit-message: "Site update for ${{ needs.generate.outputs.tag }}"
+          title: "Site update for ${{ needs.generate.outputs.tag }}"
+          body: |
+            Generated from PixlStash **${{ needs.generate.outputs.tag }}**:
+
+            - `site/api/` — the release's API reference.
+            - `site/latest-version.json` and `site/latest-version/*.json` — raised
+              to this release if it is newer than the one published.
+            - `site/training-presets/v1/` — the training recipes the release ships.
+
+            Merging publishes nothing. Tag the merge commit to deploy it.
+          add-paths: |
+            site/api
+            site/latest-version.json
+            site/latest-version
+            site/training-presets
+          delete-branch: true

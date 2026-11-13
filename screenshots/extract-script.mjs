@@ -6,13 +6,13 @@
 // reproduce with the current UI.
 //
 // Pure Node, no deps: a lightweight block parser over the static HTML. Run:
-//   node website/screenshots/extract-script.mjs
+//   node screenshots/extract-script.mjs
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const siteDir = join(here, '..')
+const siteDir = join(here, '..', 'site')
 
 const stripTags = (s) =>
   s
