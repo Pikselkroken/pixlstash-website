@@ -834,24 +834,29 @@
         line-height: 1.5;
       }
 
-      /* Line up with the numbered sections below, past their pin column. */
-      .release-hero--map {
-        margin-left: 70px;
-      }
-
+      /* The pin sits beside the heading; the cards under it run the full
+         width, like the hero. */
       .map-detail {
         margin-top: 44px;
         display: grid;
-        grid-template-columns: 52px minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: 44px minmax(0, 1fr);
+        column-gap: 14px;
         scroll-margin-top: 16px;
+      }
+
+      .map-detail > div {
+        display: contents;
+      }
+
+      .map-detail > div > :not(h2) {
+        grid-column: 1 / -1;
       }
 
       .map-detail > .app-pin {
         width: 44px;
         height: 44px;
         font-size: 1.15rem;
-        margin-top: 4px;
+        margin-top: -4px;
       }
 
       .map-detail > div > h2 {
@@ -1043,13 +1048,9 @@
           padding: 18px;
         }
 
-        .release-hero--map {
-          margin-left: 0;
-        }
-
         .map-detail {
-          grid-template-columns: 1fr;
-          gap: 10px;
+          grid-template-columns: 36px minmax(0, 1fr);
+          column-gap: 10px;
         }
 
         .map-detail > .app-pin {
@@ -1094,7 +1095,7 @@
       <script src="nav.js"></script>
 
       <!-- PixlStash 2.0 -->
-      <section class="release-hero release-hero--map">
+      <section class="release-hero">
         <div class="map-hero-head">
           <div>
             <span class="release-kicker">PixlStash 2.0</span>
