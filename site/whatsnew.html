@@ -7,7 +7,7 @@
     <title>What's New in PixlStash 2.0</title>
     <meta
       name="description"
-      content="What's new in PixlStash 2.0: train a LoRA from a person or a set and use it right away, a Models workspace that sorts and moves model files, tags that copy, paste and suggest themselves in search, and pictures copied out as their original files."
+      content="What's new in PixlStash 2.0: train a LoRA from a person or a set and use it right away, face likeness clusters, character sheets for training, a Models workspace that sorts and moves model files, tags that copy, paste and suggest themselves in search, and pictures copied out as their original files."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -761,7 +761,7 @@
       /* -- 2.0: the app map hero, a numbered section per pin -- */
       .map-hero-head {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
         gap: 32px;
         align-items: center;
         padding: 22px 26px;
@@ -773,7 +773,7 @@
         font-size: clamp(2rem, 3.6vw, 2.5rem);
         line-height: 1.05;
         letter-spacing: -0.01em;
-        white-space: nowrap;
+        text-wrap: balance;
       }
 
       .map-hero-head p {
@@ -1085,11 +1085,12 @@
         <div class="map-hero-head">
           <div>
             <span class="release-kicker">PixlStash 2.0</span>
-            <h1>LoRA training and streamlined UI</h1>
+            <h1>LoRA training, face likeness clusters, character sheets and a streamlined UI</h1>
           </div>
           <p>
-            PixlStash 2.0 trains LoRAs from your people and sets, and the app
-            is split into three workspaces.
+            PixlStash 2.0 trains LoRAs from your people and sets, groups a
+            person's faces by likeness, draws character sheets for training,
+            and splits the app into three workspaces.
           </p>
         </div>
         <div class="map-hero-body">
@@ -1112,8 +1113,10 @@
               <div>
                 <h2><a href="#v2-training">Train a LoRA and use it right away</a></h2>
                 <p>
-                  Select a person or a set and press Train LoRA. The finished
-                  LoRA is on the shelf and attached to them.
+                  Select a person or a set and press Train LoRA. Face likeness
+                  clusters pick the right pictures, character sheets fill in
+                  when there are none, and the finished LoRA is on the shelf
+                  and attached to them.
                 </p>
               </div>
             </li>
@@ -1181,6 +1184,84 @@
                   person or set uses.
                 </p>
               </div>
+            </div>
+          </article>
+          <article class="update-card update-card--video" style="margin-top: 20px">
+            <video
+              class="zoomable-video"
+              src="assets/TrainingFinn.mp4"
+              aria-label="Following Finn's training run: the loss curve, the pictures used for training, and the preview images from each checkpoint"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <div class="update-card-body">
+              <p>
+                Follow the run while it trains. The run's page shows the loss,
+                the pictures it is training on, and the preview images from
+                each checkpoint.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="map-detail" id="v2-faces">
+        <span class="app-pin" aria-hidden="true">1</span>
+        <div>
+          <h2>Face likeness clusters</h2>
+          <article class="update-card">
+            <img
+              class="zoomable-image"
+              src="assets/FaceClusters.jpg"
+              alt="Finn's faces: clusters of look-alike faces in a list, the reference cluster laid out with each face's likeness to the centre, and an Accept down to slider"
+              loading="lazy"
+            />
+            <div class="update-card-cols">
+              <div class="update-card-body">
+                <p>
+                  Choose <strong>Faces and reference cluster…</strong> on a
+                  person's menu to see their faces grouped by who they look
+                  like. A few generated pictures of someone slightly different
+                  end up in a group of their own.
+                </p>
+              </div>
+              <div class="update-card-body">
+                <p>
+                  Pick the group that is the person and trim its least typical
+                  faces with the slider. That group then decides who the person
+                  is when ranking likeness and choosing a training set.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="update-card update-card--video" style="margin-top: 20px">
+            <video
+              class="zoomable-video"
+              src="assets/FaceClustersAndTrainingSets.mp4"
+              aria-label="Choosing Finn's reference cluster and inspecting its pictures, choosing the training set size, then starting and following training"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <div class="update-card-body">
+              <p>
+                Right-click a person and choose
+                <strong>Create a training set…</strong>. PixlStash picks the
+                best likeness and quality, spread across close-ups, full-body
+                shots and expressions, and leaves out near copies and other
+                people. Drag the slider to choose how many, then train.
+              </p>
+              <p>
+                <strong>Character sheets.</strong> A character with few or no
+                pictures can have them drawn: describe the character, or start
+                from one of their pictures, and keep the sheets that look
+                right. Their photos become the character's pictures.
+              </p>
             </div>
           </article>
         </div>
