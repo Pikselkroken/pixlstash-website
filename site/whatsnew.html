@@ -834,13 +834,10 @@
         line-height: 1.5;
       }
 
-      /* The pin sits beside the heading; the cards under it run the full
-         width, like the hero. */
+      /* The cards under each heading run the full width, like the hero. */
       .map-detail {
         margin-top: 44px;
         display: grid;
-        grid-template-columns: 44px minmax(0, 1fr);
-        column-gap: 14px;
         scroll-margin-top: 16px;
       }
 
@@ -850,13 +847,6 @@
 
       .map-detail > div > :not(h2) {
         grid-column: 1 / -1;
-      }
-
-      .map-detail > .app-pin {
-        width: 44px;
-        height: 44px;
-        font-size: 1.15rem;
-        margin-top: -4px;
       }
 
       .map-detail > div > h2 {
@@ -1060,18 +1050,6 @@
           padding: 18px;
         }
 
-        .map-detail {
-          grid-template-columns: 36px minmax(0, 1fr);
-          column-gap: 10px;
-        }
-
-        .map-detail > .app-pin {
-          width: 36px;
-          height: 36px;
-          font-size: 1rem;
-          margin-top: 0;
-        }
-
         .map-detail > div > h2 {
           font-size: 1.4rem;
         }
@@ -1173,7 +1151,6 @@
       </section>
 
       <section class="map-detail" id="v2-training">
-        <span class="app-pin" aria-hidden="true">1</span>
         <div>
           <h2>Train a LoRA from a person or a set, and use it right away</h2>
           <article class="update-card">
@@ -1256,7 +1233,6 @@
       </section>
 
       <section class="map-detail" id="v2-faces">
-        <span class="app-pin" aria-hidden="true">1</span>
         <div>
           <h2>Face likeness clusters</h2>
           <article class="update-card">
@@ -1309,7 +1285,6 @@
       </section>
 
       <section class="map-detail" id="v2-sheets">
-        <span class="app-pin" aria-hidden="true">1</span>
         <div>
           <h2>Character sheets</h2>
           <article class="update-card">
@@ -1372,7 +1347,6 @@
       </section>
 
       <section class="map-detail" id="v2-lightbox">
-        <span class="app-pin" aria-hidden="true">2</span>
         <div>
           <h2>Improved Lightbox view and editing</h2>
           <article class="update-card update-card--video">
@@ -1406,7 +1380,6 @@
       </section>
 
       <section class="map-detail" id="v2-models">
-        <span class="app-pin" aria-hidden="true">3</span>
         <div>
           <h2>Much improved model browser</h2>
           <article class="update-card update-card--solo">
@@ -1455,7 +1428,6 @@
       </section>
 
       <section class="map-detail" id="v2-tags">
-        <span class="app-pin" aria-hidden="true">4</span>
         <div>
           <h2>Copy and paste tags</h2>
           <article class="update-card update-card--solo update-card--flip">
@@ -1483,7 +1455,6 @@
       </section>
 
       <section class="map-detail" id="v2-files">
-        <span class="app-pin" aria-hidden="true">5</span>
         <div>
           <h2>Pictures leave as the original files</h2>
           <article class="update-card update-card--solo">
