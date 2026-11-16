@@ -3,7 +3,7 @@
   "info": {
     "title": "PixlStash API",
     "description": "<a href=\"https://pixlstash.dev\" target=\"_blank\" rel=\"noopener\">\n  <img\n    src=\"scalar-assets/logo.png\"\n    alt=\"PixlStash\"\n    width=\"120\"\n    style=\"float: right; margin: 0 0 16px 24px\"\n  />\n</a>\n\n# Simplify your image workflow\n\n**PixlStash is a self-hosted, open-source image library for creators.** It imports your\npictures and videos, auto-tags and captions them with local AI models, recognises\ncharacters and faces, scores image quality, runs natural-language semantic search and\ndrives ComfyUI workflows - all on your own hardware, with no cloud and no lock-in.\n\n**Integrate with scripts, pipelines and external tools** - fetch images, metadata, tags and\nmore. This REST API exposes everything the app can do - **pictures, tags, stacks, sets,\ncharacters and projects** - so you can script imports, build integrations and automate your pipeline.\n\n### \u2192 Learn more and download at **[pixlstash.dev](https://pixlstash.dev)**\n\n<div style=\"clear: both\"></div>\n\n---\n\n## What can you do with this?\n\nDrive any tool or pipeline you can script. For a worked example, see the\n[**PixlStash LM Studio plugin**](https://github.com/pikselkroken/pixlstash-lmstudio) -\nit uses this API to let a locally-running LLM illustrate its chat replies with\nmatching pictures from your PixlStash library.\n\n## Quick start\n\nCreate an API token (steps below), then fetch your first 50 pictures - replace\n`your-pixlstash-host` with your server's address:\n\n```bash\ncurl \"https://your-pixlstash-host/api/v1/pictures?limit=50\" \\\n  -H \"Authorization: Bearer YOUR_TOKEN\"\n```\n\n## Authentication\n\nEvery request authenticates with a personal **API token**, sent as a Bearer header:\n\n```http\nAuthorization: Bearer YOUR_TOKEN\n```\n\nTokens have one of two access types:\n\n| Access type | Can do | Notes |\n| --- | --- | --- |\n| **Full access** | Read **and** write - everything your account can do | Never put a full-access token in a URL |\n| **Read-only** | `GET` requests only | May also be passed as a `?token=\u2026` query parameter (handy for share links) |\n\n## Creating a token\n\n**1. Open Settings** - click the gear icon at the right end of the title bar.\n\n![Open Settings from the top toolbar](scalar-assets/WhereIsUserSettings.jpg)\n\n**2. Open the *Account & tokens* pane.**\n\n![The Account & tokens pane](scalar-assets/ScreenshotsUserSettings.jpg)\n\n**3. Create the token** - in the **API Tokens** section, click **New token**, type a\ndescription, choose an access type (*Full access* or *Read-only*), optionally set an expiry\ndate and, for a read-only token, tick *Apply watermark*, then click **Create token**.\n\n![The New API token dialog over Account & tokens](scalar-assets/ScreenshotTokens.jpg)\n\n**4. Copy it now** - the token is shown **only once**. Copy it and store it somewhere safe;\nyou won't be able to see it again.\n\n![Copy the newly created token](scalar-assets/ScreenshotToken.jpg)\n\n## Using the token\n\nThe API is served under `/api/v1`. Send your token in the `Authorization` header on every\nrequest, replacing `your-pixlstash-host` with the address of your PixlStash server. To\nconfirm a token is valid:\n\n```bash\ncurl https://your-pixlstash-host/api/v1/check-session \\\n  -H \"Authorization: Bearer YOUR_TOKEN\"\n```\n\nA **read-only** token may instead be passed in the query string for quick read requests\n(never do this with a full-access token):\n\n```bash\ncurl \"https://your-pixlstash-host/api/v1/pictures?limit=50&token=YOUR_READ_TOKEN\"\n```\n\nBrowse the endpoints below for full request and response details.\n",
-    "version": "2.0.0"
+    "version": "2.0.1"
   },
   "paths": {
     "/api/v1/pictures": {
@@ -714,6 +714,45 @@
               "title": "Id"
             },
             "description": "Restrict to specific picture ids (repeatable)."
+          },
+          {
+            "name": "face_cluster",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request.",
+              "title": "Face Cluster"
+            },
+            "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request."
+          },
+          {
+            "name": "face_cluster_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 0.95,
+                  "minimum": 0.05
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The face_cluster strictness, as `/face-clusters` takes it.",
+              "title": "Face Cluster Threshold"
+            },
+            "description": "The face_cluster strictness, as `/face-clusters` takes it."
           }
         ],
         "responses": {
@@ -1874,6 +1913,391 @@
         ]
       }
     },
+    "/api/v1/character-sheets/prompt": {
+      "post": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Build a character sheet prompt",
+        "description": "The layout prompt, negative and canvas size for one character sheet: four passport photos and two body photos of the character described. MOSS-Image's layout JSON, or with `layout: prose` one sentence for a model drawing from a reference picture. Run it with `POST /workflows/run`.",
+        "operationId": "sheet_prompt_api_v1_character_sheets_prompt_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SheetPromptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetPrompt"
+                },
+                "example": {
+                  "prompt": "string",
+                  "negative": "string",
+                  "width": 0,
+                  "height": 0
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/characters/{character_id}/sheets/rank": {
+      "post": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Rank drawn character sheets",
+        "description": "Scores each sheet by how alike its own faces are and by how close they come to the character's reference cluster (each face's best match in it), or to the faces of `reference_picture_ids` when the sheets are compared with the pictures they were drawn from. A sheet whose faces are not read yet comes back unscored.",
+        "operationId": "rank_sheets_api_v1_characters__character_id__sheets_rank_post",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Character Id",
+              "examples": [
+                1
+              ]
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SheetRankRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetRanking"
+                },
+                "example": {
+                  "sheets": [
+                    {
+                      "picture_id": 0,
+                      "format": "string",
+                      "faces_read": true,
+                      "faces": 0,
+                      "agreement": 0.0,
+                      "agreement_words": "string",
+                      "closeness": 0.0,
+                      "close": true,
+                      "broken": true,
+                      "panels": [
+                        {
+                          "panel": 0,
+                          "box": [
+                            0.0
+                          ],
+                          "agreement": 0.0,
+                          "agrees": true,
+                          "closeness": 0.0,
+                          "close": true
+                        }
+                      ],
+                      "different_from": [
+                        0
+                      ],
+                      "cuts_cleanly": true,
+                      "cells": [
+                        [
+                          0.0
+                        ]
+                      ]
+                    }
+                  ],
+                  "references": 0
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/characters/{character_id}/sheets/use": {
+      "post": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Use character sheets",
+        "description": "Cuts each sheet into its six panels (four passport photos, then two body photos), imports each as a picture made from its sheet, and files them on the character. A held sheet counts. The sheets themselves are left as they are.",
+        "operationId": "use_sheets_api_v1_characters__character_id__sheets_use_post",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Character Id",
+              "examples": [
+                1
+              ]
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SheetIds"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsedSheets"
+                },
+                "example": {
+                  "picture_ids": [
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/face-clusters": {
+      "get": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Group a person's faces by identity",
+        "description": "Clusters the person's faces (one a picture) by average-linkage on cosine distance: groups merge while the mean likeness between their faces clears `threshold`. Each member carries its likeness to its cluster's centre. A face that matches no one is listed under `unclustered`. Computed on each call; nothing is stored. Not to be confused with `/pictures/likeness-groups`, which joins near-duplicate pictures.",
+        "operationId": "get_face_clusters_api_v1_face_clusters_get",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Character Id"
+            }
+          },
+          {
+            "name": "threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 0.95,
+              "minimum": 0.05,
+              "description": "The mean likeness two groups need to count as one person.",
+              "title": "Threshold"
+            },
+            "description": "The mean likeness two groups need to count as one person."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaceClusters"
+                },
+                "example": {
+                  "threshold": 0.0,
+                  "faces": 0,
+                  "reference_cluster": [
+                    0
+                  ],
+                  "clusters": [
+                    {
+                      "members": [
+                        {
+                          "picture_id": 0,
+                          "centrality": 0.0,
+                          "score": 0,
+                          "format": "string",
+                          "width": 0,
+                          "height": 0,
+                          "thumbnail_width": 0,
+                          "thumbnail_height": 0,
+                          "orientation": 0
+                        }
+                      ],
+                      "size": 0,
+                      "cohesion": 0.0,
+                      "reference_share": 0.0,
+                      "is_reference": true,
+                      "similarity_to_reference": 0.0,
+                      "from_sheets": true
+                    }
+                  ],
+                  "unclustered": [
+                    {
+                      "picture_id": 0,
+                      "score": 0,
+                      "similarity_to_reference": 0.0,
+                      "format": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/characters/{id}/reference-cluster": {
+      "put": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Set a person's reference cluster",
+        "description": "Stores the pictures the owner picked as who the person is. Every id must carry the person's face (422 otherwise, naming the ids). The cluster is frozen: pictures added later never join it. An empty list clears it. With one, the person's reference faces are its faces, most central first.",
+        "operationId": "put_reference_cluster_api_v1_characters__id__reference_cluster_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id",
+              "examples": [
+                1
+              ]
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceClusterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceCluster"
+                },
+                "example": {
+                  "picture_ids": [
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/picture_sets": {
       "get": {
         "tags": [
@@ -1926,6 +2350,7 @@
                     "locked": false,
                     "parent_set_id": 0,
                     "parent_character_id": 0,
+                    "building": {},
                     "picture_count": 0,
                     "top_picture_ids": [
                       0
@@ -1958,7 +2383,7 @@
           "picture_sets"
         ],
         "summary": "Create picture set",
-        "description": "Creates a new picture set with name and optional description. Accepts ``project_ids`` (a list of projects the set joins) or the legacy single ``project_id``, and at most one of ``parent_set_id`` and ``parent_character_id`` to create it as a child set.",
+        "description": "Creates a new picture set with name and optional description. Accepts ``project_ids`` (a list of projects the set joins) or the legacy single ``project_id``, and at most one of ``parent_set_id`` and ``parent_character_id`` to create it as a child set. ``building`` creates it as a training set still being built.",
         "operationId": "create_picture_set_api_v1_picture_sets_post",
         "requestBody": {
           "required": true,
@@ -2092,6 +2517,7 @@
                   "locked": false,
                   "parent_set_id": 0,
                   "parent_character_id": 0,
+                  "building": {},
                   "picture_count": 0,
                   "top_picture_ids": [
                     0
@@ -2433,6 +2859,7 @@
                     "locked": false,
                     "parent_set_id": 0,
                     "parent_character_id": 0,
+                    "building": {},
                     "picture_count": 0,
                     "top_picture_ids": [
                       0
@@ -2476,7 +2903,7 @@
           "picture_sets"
         ],
         "summary": "Update picture set",
-        "description": "Updates picture set name and/or description.\n\n**Project membership.** Send ``project_ids`` (a list) to set the full set of projects the picture set belongs to - a set may be in several at once. The legacy single ``project_id`` is still accepted and means the same as a one-element ``project_ids``; ``null`` on either key removes the set from every project. ``project_ids`` wins when both are present. Member pictures follow: they join every project the set joins, and leave a project it leaves unless another character or picture set still anchors them there. Re-sending the set's existing projects is an idempotent repair that heals missing membership rows. Returns 409 on a name clash inside any target project and 404 for an unknown project id.\n\n**Parent.** Sending either ``parent_set_id`` or ``parent_character_id`` replaces the set's parent with the pair given (a missing key is null), so both null moves it to the top level. A set cannot sit under itself or one of its own child sets (400).",
+        "description": "Updates picture set name and/or description.\n\n**Project membership.** Send ``project_ids`` (a list) to set the full set of projects the picture set belongs to - a set may be in several at once. The legacy single ``project_id`` is still accepted and means the same as a one-element ``project_ids``; ``null`` on either key removes the set from every project. ``project_ids`` wins when both are present. Member pictures follow: they join every project the set joins, and leave a project it leaves unless another character or picture set still anchors them there. Re-sending the set's existing projects is an idempotent repair that heals missing membership rows. Returns 409 on a name clash inside any target project and 404 for an unknown project id.\n\n**Parent.** Sending either ``parent_set_id`` or ``parent_character_id`` replaces the set's parent with the pair given (a missing key is null), so both null moves it to the top level. A set cannot sit under itself or one of its own child sets (400).\n\n**Building.** ``building`` replaces a training set's build state (a JSON object, at most 256 KB); ``null`` marks the set finished.",
         "operationId": "update_picture_set_api_v1_picture_sets__id__patch",
         "parameters": [
           {
@@ -2541,7 +2968,7 @@
           "picture_sets"
         ],
         "summary": "Delete picture set",
-        "description": "Deletes a picture set and all its membership links. Its child sets move to the top level with their pictures.",
+        "description": "Deletes a picture set and all its membership links. Its child sets move to the top level with their pictures. A training set still being built also stops the sheet runs its ``building.run_keys`` names; ``stopped_runs`` says how many were still going.",
         "operationId": "delete_picture_set_api_v1_picture_sets__id__delete",
         "parameters": [
           {
@@ -2568,7 +2995,8 @@
                 },
                 "example": {
                   "status": "string",
-                  "deleted_id": 0
+                  "deleted_id": 0,
+                  "stopped_runs": 0
                 }
               }
             }
@@ -7491,7 +7919,7 @@
           "reviews"
         ],
         "summary": "Create a review session for one tag",
-        "description": "Creates a review (one tag + optional frozen project/set/character scope), runs the near-neighbour scan once into it, and returns the receipt: pictures scanned, suspects found, suspects handled in earlier reviews, and how many the bulk auto-resolve would settle. ``include_reviewed=true`` re-surfaces previously-decided suspects into this review. 409 when the tag already has an OPEN review.",
+        "description": "Creates a review (one tag + optional frozen project/set/character scope), runs the near-neighbour scan once into it, and returns the receipt: pictures scanned, suspects found, suspects handled in earlier reviews, and how many the bulk auto-resolve would settle. ``source=model`` instead queues the ``limit`` unreviewed pictures whose tagger confidence is closest to the tag's threshold, nearest first. ``include_reviewed=true`` re-surfaces previously-decided suspects into this review. 409 when the tag already has an OPEN review. With ``picture_ids`` no scan runs: every listed picture gets a card, in the order given, and ``control_share`` mixes in that share of pictures that already carry a human verdict for the tag (drawn from the scope, unmarked). A control's answer changes no label; the detail's ``receipt.controls`` reports how they scored. 400 when the list is empty or names a picture not in the library.",
         "operationId": "create_review_api_v1_reviews_post",
         "requestBody": {
           "required": true,
@@ -7514,13 +7942,15 @@
                 "example": {
                   "id": 0,
                   "tag": "string",
+                  "source": "near_neighbor",
                   "scope": {},
                   "status": "string",
                   "stats": {
                     "scanned": 0,
                     "found": 0,
                     "prev_reviewed": 0,
-                    "auto_resolvable": 0
+                    "auto_resolvable": 0,
+                    "controls": 0
                   },
                   "created_at": "string",
                   "refreshed_at": "string",
@@ -7599,13 +8029,15 @@
                   {
                     "id": 0,
                     "tag": "string",
+                    "source": "near_neighbor",
                     "scope": {},
                     "status": "string",
                     "stats": {
                       "scanned": 0,
                       "found": 0,
                       "prev_reviewed": 0,
-                      "auto_resolvable": 0
+                      "auto_resolvable": 0,
+                      "controls": 0
                     },
                     "created_at": "string",
                     "refreshed_at": "string",
@@ -7828,13 +8260,15 @@
                 "example": {
                   "id": 0,
                   "tag": "string",
+                  "source": "near_neighbor",
                   "scope": {},
                   "status": "string",
                   "stats": {
                     "scanned": 0,
                     "found": 0,
                     "prev_reviewed": 0,
-                    "auto_resolvable": 0
+                    "auto_resolvable": 0,
+                    "controls": 0
                   },
                   "created_at": "string",
                   "refreshed_at": "string",
@@ -7932,7 +8366,7 @@
           "reviews"
         ],
         "summary": "Re-scan a review append-only",
-        "description": "Re-runs the near-neighbour scan for the review's tag and frozen scope. New suspects are appended; the review's decided rows are never resurrected. Updates ``refreshed_at`` and ``found``.",
+        "description": "Re-runs the review's own candidate source for its tag and frozen scope. New suspects are appended; the review's decided rows are never resurrected. Updates ``refreshed_at`` and ``found``. 409 for a review of a supplied list, which has no scan.",
         "operationId": "refresh_review_api_v1_reviews__review_id__refresh_post",
         "parameters": [
           {
@@ -8017,13 +8451,15 @@
                 "example": {
                   "id": 0,
                   "tag": "string",
+                  "source": "near_neighbor",
                   "scope": {},
                   "status": "string",
                   "stats": {
                     "scanned": 0,
                     "found": 0,
                     "prev_reviewed": 0,
-                    "auto_resolvable": 0
+                    "auto_resolvable": 0,
+                    "controls": 0
                   },
                   "created_at": "string",
                   "refreshed_at": "string",
@@ -8096,13 +8532,15 @@
                 "example": {
                   "id": 0,
                   "tag": "string",
+                  "source": "near_neighbor",
                   "scope": {},
                   "status": "string",
                   "stats": {
                     "scanned": 0,
                     "found": 0,
                     "prev_reviewed": 0,
-                    "auto_resolvable": 0
+                    "auto_resolvable": 0,
+                    "controls": 0
                   },
                   "created_at": "string",
                   "refreshed_at": "string",
@@ -13424,6 +13862,45 @@
               "title": "Id"
             },
             "description": "Restrict to specific picture ids (repeatable)."
+          },
+          {
+            "name": "face_cluster",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request.",
+              "title": "Face Cluster"
+            },
+            "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request."
+          },
+          {
+            "name": "face_cluster_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 0.95,
+                  "minimum": 0.05
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The face_cluster strictness, as `/face-clusters` takes it.",
+              "title": "Face Cluster Threshold"
+            },
+            "description": "The face_cluster strictness, as `/face-clusters` takes it."
           }
         ],
         "responses": {
@@ -14117,6 +14594,45 @@
               "title": "Id"
             },
             "description": "Restrict to specific picture ids (repeatable)."
+          },
+          {
+            "name": "face_cluster",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request.",
+              "title": "Face Cluster"
+            },
+            "description": "With one character_id: only the person's 'Cluster N', numbered as `GET /face-clusters` lists them (reference cluster first, then largest first). Recomputed per request."
+          },
+          {
+            "name": "face_cluster_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 0.95,
+                  "minimum": 0.05
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The face_cluster strictness, as `/face-clusters` takes it.",
+              "title": "Face Cluster Threshold"
+            },
+            "description": "The face_cluster strictness, as `/face-clusters` takes it."
           }
         ],
         "responses": {
@@ -22298,7 +22814,7 @@
     "/api/v1/training/character_set_suggestion": {
       "get": {
         "summary": "Suggest a training set for a character LoRA",
-        "description": "Ranks the character's pictures and clips for a LoRA training set: likeness and quality first, then variety in framing, expression and look. Pictures with someone else in frame, near copies, low quality or a poor likeness are set aside unless included. Computed on each call; nothing is stored. Owner-only.",
+        "description": "Ranks the character's pictures and clips for a LoRA training set: likeness and quality first, then variety in framing, expression and look. Pictures with someone else in frame and near copies are set aside unless included; so are pictures under the minimum likeness or the minimum score. Computed on each call; nothing is stored. Owner-only.",
         "operationId": "get_character_set_suggestion_api_v1_training_character_set_suggestion_get",
         "parameters": [
           {
@@ -22329,22 +22845,62 @@
             }
           },
           {
-            "name": "include_low_quality",
+            "name": "min_likeness",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "boolean",
-              "title": "Include Low Quality"
-            }
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 0,
+              "description": "Pictures with a likeness (0-100) below this are set aside.",
+              "title": "Min Likeness"
+            },
+            "description": "Pictures with a likeness (0-100) below this are set aside."
           },
           {
-            "name": "include_low_likeness",
+            "name": "min_score",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "boolean",
-              "title": "Include Low Likeness"
-            }
+              "type": "number",
+              "maximum": 5,
+              "minimum": 1,
+              "description": "Pictures scoring below this are set aside: the rating where one was given, the smart score where not.",
+              "title": "Min Score"
+            },
+            "description": "Pictures scoring below this are set aside: the rating where one was given, the smart score where not."
+          },
+          {
+            "name": "framing_variety",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "unimportant",
+                "somewhat",
+                "important"
+              ],
+              "type": "string",
+              "description": "How much a framing the picks lack counts for a picture.",
+              "title": "Framing Variety"
+            },
+            "description": "How much a framing the picks lack counts for a picture."
+          },
+          {
+            "name": "expression_variety",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "unimportant",
+                "somewhat",
+                "important"
+              ],
+              "type": "string",
+              "description": "How much an expression the picks lack counts for a picture.",
+              "title": "Expression Variety"
+            },
+            "description": "How much an expression the picks lack counts for a picture."
           }
         ],
         "responses": {
@@ -22390,7 +22946,9 @@
                     "would_add": {},
                     "available": {}
                   },
-                  "targets": {}
+                  "targets": {},
+                  "limits": {},
+                  "kept": {}
                 }
               }
             }
@@ -22518,6 +23076,8 @@
                       "id": "string",
                       "name": "string",
                       "type": "string",
+                      "reference_inputs": 0,
+                      "sheet_layout": false,
                       "type_label": "string",
                       "imported": false,
                       "manual": false,
@@ -22753,6 +23313,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -23044,6 +23606,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -23476,6 +24040,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -23888,6 +24454,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -24180,6 +24748,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -24479,6 +25049,8 @@
                     "id": "string",
                     "name": "string",
                     "type": "string",
+                    "reference_inputs": 0,
+                    "sheet_layout": false,
                     "type_label": "string",
                     "imported": false,
                     "manual": false,
@@ -24969,7 +25541,7 @@
           "workflows"
         ],
         "summary": "Check what a run would do",
-        "description": "The same body as POST /workflows/run, submitting nothing. Every card the request resolves to comes back with the reasons it would not run: comfyui_not_configured, comfyui_unreachable, ui_format, missing_nodes, missing_models, a1111, picture_input_unfilled, no_lora_loader, pixlstash_nodes, no_save_node, no_runnable_source, lora_not_skippable, stage_not_skippable, missing_choices, pack_outdated, models_downloading (a model the graph names that PixlStash is still downloading, with its percent). A group runs when its reasons are empty - or when the only ones left are an uninspectable ComfyUI the body said allow_unchecked to. A LoRA this ComfyUI does not have is NOT among them: its loader is taken out of the graph and named in bypassed_loras, which is a fact about the run rather than a reason against it; so is unplaced_loras, a saved recipe's LoRA the workflow has no slot for or the shelf cannot identify. skip_loras names slots this run goes without: each loader is bypassed on the run's copy and reported in bypassed_loras with requested true, and one that cannot be skipped without dropping another LoRA is lora_not_skippable. skip_stages names optional stages (upscale, face_detailer, seed_variance, intermediate_save) this run goes without; a card whose stage cannot be taken out is stage_not_skippable. missing_choices names each sampler_name or scheduler this ComfyUI does not list, with its options and a replacement (euler, simple) to send back in choices. Likewise a custom seed node this ComfyUI lacks (rgthree's Seed and its kin) is replaced by the run's own seed and named in replaced_nodes, where every input it fed is one the seed pass writes; so is a plain text node (Text Multiline, CR Text, Textbox, PrimitiveStringMultiline), its string inlined. A body that cannot be interpreted against the card answers 400/404/422 here exactly as it does on the run, so the two never disagree.",
+        "description": "The same body as POST /workflows/run, submitting nothing. Every card the request resolves to comes back with the reasons it would not run: comfyui_not_configured, comfyui_unreachable, ui_format, missing_nodes, missing_models, a1111, picture_input_unfilled, no_lora_loader, pixlstash_nodes, no_save_node, no_runnable_source, lora_not_skippable, stage_not_skippable, missing_choices, unwired_inputs (a required input with nothing connected to it), pack_outdated, models_downloading (a model the graph names that PixlStash is still downloading, with its percent). A group runs when its reasons are empty - or when the only ones left are an uninspectable ComfyUI the body said allow_unchecked to. A LoRA this ComfyUI does not have is NOT among them: its loader is taken out of the graph and named in bypassed_loras, which is a fact about the run rather than a reason against it; so is unplaced_loras, a saved recipe's LoRA the workflow has no slot for or the shelf cannot identify. skip_loras names slots this run goes without: each loader is bypassed on the run's copy and reported in bypassed_loras with requested true, and one that cannot be skipped without dropping another LoRA is lora_not_skippable. skip_stages names optional stages (upscale, face_detailer, seed_variance, intermediate_save) this run goes without; a card whose stage cannot be taken out is stage_not_skippable. missing_choices names each sampler_name or scheduler this ComfyUI does not list, with its options and a replacement (euler, simple) to send back in choices. Likewise a custom seed node this ComfyUI lacks (rgthree's Seed and its kin) is replaced by the run's own seed and named in replaced_nodes, where every input it fed is one the seed pass writes; so is a plain text node (Text Multiline, CR Text, Textbox, PrimitiveStringMultiline), its string inlined. A body that cannot be interpreted against the card answers 400/404/422 here exactly as it does on the run, so the two never disagree.",
         "operationId": "preflight_run_api_v1_workflows_run_preflight_post",
         "parameters": [
           {
@@ -25413,7 +25985,7 @@
           "workflows"
         ],
         "summary": "Clear the finished runs",
-        "description": "Forget the runs of this library that have ended, as the Tasks tab's Finished group lists them (`GET /workers/progress`, `finished`). A run whose changes can still be saved is kept: only its own `DELETE /workflows/runs/{run_id}` throws them away.",
+        "description": "Forget the runs of this library that have ended, as the Tasks tab's Finished group lists them (`GET /workers/progress`, `finished`), each with the changes its workflow kept from it, as `DELETE /workflows/runs/{run_id}` does one.",
         "operationId": "clear_finished_runs_api_v1_workflows_runs_delete",
         "responses": {
           "200": {
@@ -25472,6 +26044,61 @@
                 "example": {
                   "cleared": 0,
                   "workflow_id": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/stop": {
+      "post": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Stop one run",
+        "description": "Stop the one run named, by its run_id or prompt_id, and no other: held by PixlStash it is cancelled, queued in ComfyUI it is taken off the queue, drawing it is interrupted. It then ends as a failed run with `stopped` set. A run that already ended stops nothing; one PixlStash does not know, or another library's, answers 404.",
+        "operationId": "stop_run_api_v1_workflows_runs__run_id__stop_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "examples": [
+                "1"
+              ]
+            },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStopped"
+                },
+                "example": {
+                  "stopped": 0
                 }
               }
             }
@@ -25939,6 +26566,67 @@
         "summary": "Convert a workflow to inpainting",
         "description": "Store a new manual workflow made from this img2img or image-edit workflow that inpaints with Crop & Stitch: it redraws only the selection at the workflow's working resolution and stitches the result back into the original picture. The original is not changed.",
         "operationId": "inpaint_copy_workflow_api_v1_workflows__workflow_id__inpaint_copy_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workflow Id",
+              "examples": [
+                "1"
+              ]
+            },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowFile"
+                },
+                "example": {
+                  "name": "string",
+                  "workflow_id": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "This machine has no such card."
+          },
+          "409": {
+            "description": "There is no graph to convert."
+          },
+          "413": {
+            "description": "The graph is past the size a stored workflow may be."
+          },
+          "422": {
+            "description": "This graph cannot be converted; the detail says why."
+          },
+          "500": {
+            "description": "The copy could not be written."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}/sheet-copy": {
+      "post": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Convert a workflow to draw character sheets",
+        "description": "Store a new manual workflow made from this image-edit workflow that draws on a canvas of its own size instead of its picture's, so the picture is a reference only: what a character sheet drawn from a reference picture runs. Made from a text-to-image workflow, the copy encodes its prompt with ComfyUI-PixlStash's Layout Text Encode, which draws a sheet's layout prompt as regions on any model. The original is not changed.",
+        "operationId": "sheet_copy_workflow_api_v1_workflows__workflow_id__sheet_copy_post",
         "parameters": [
           {
             "name": "workflow_id",
@@ -30861,6 +31549,25 @@
             "type": "object",
             "title": "Targets",
             "description": "The share of a set each label should hold; a set of N wants max(1, round(share * N))."
+          },
+          "limits": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Limits",
+            "description": "The highest min_likeness and min_score that still let one of the character's pictures through."
+          },
+          "kept": {
+            "additionalProperties": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Kept",
+            "description": "How many of the character's pictures each floor would leave at each of its steps, by itself: min_likeness 0 to 100, min_score 1 to 5 in halves."
           }
         },
         "type": "object",
@@ -30871,7 +31578,9 @@
           "has_clips",
           "stills",
           "clips",
-          "targets"
+          "targets",
+          "limits",
+          "kept"
         ],
         "title": "CharacterSetSuggestionResponse",
         "description": "A ranked training set for a character LoRA."
@@ -31189,6 +31898,107 @@
         ],
         "title": "ClonedWorkflow",
         "description": "The file ``POST /workflows/{workflow_id}/clone-with-models`` wrote."
+      },
+      "ClusterMember": {
+        "properties": {
+          "picture_id": {
+            "type": "integer",
+            "title": "Picture Id"
+          },
+          "centrality": {
+            "type": "number",
+            "title": "Centrality",
+            "description": "Likeness (cosine) to the cluster's centre: how typical the face is."
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score",
+            "description": "The owner's rating, or null when unrated."
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format",
+            "description": "The file's format, for loading it full size at `/pictures/{id}.{format}`."
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "thumbnail_width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Width"
+          },
+          "thumbnail_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Height"
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orientation",
+            "description": "EXIF orientation; with the sizes, the tile's aspect ratio."
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_id",
+          "centrality",
+          "score",
+          "format"
+        ],
+        "title": "ClusterMember"
       },
       "ComfyUIReadsCopy": {
         "properties": {
@@ -31679,6 +32489,22 @@
             "type": "string",
             "title": "Tag"
           },
+          "source": {
+            "type": "string",
+            "enum": [
+              "near_neighbor",
+              "model"
+            ],
+            "title": "Source",
+            "default": "near_neighbor"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 50
+          },
           "project_id": {
             "anyOf": [
               {
@@ -31716,6 +32542,29 @@
             "type": "boolean",
             "title": "Include Reviewed",
             "default": false
+          },
+          "picture_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer",
+                  "maximum": 9.223372036854776e+18,
+                  "minimum": 1.0
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picture Ids"
+          },
+          "control_share": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Control Share",
+            "default": 0.0
           }
         },
         "type": "object",
@@ -33606,6 +34455,117 @@
         ],
         "title": "ExtractedWorkflow",
         "description": "``POST /recipes/{recipe_id}/extract-workflow``: the manual workflow made."
+      },
+      "FaceCluster": {
+        "properties": {
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ClusterMember"
+            },
+            "type": "array",
+            "title": "Members",
+            "description": "Most central first."
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "cohesion": {
+            "type": "number",
+            "title": "Cohesion",
+            "description": "Mean likeness between every two members: how well it holds together."
+          },
+          "reference_share": {
+            "type": "number",
+            "title": "Reference Share",
+            "description": "The fraction of the members in the reference cluster."
+          },
+          "is_reference": {
+            "type": "boolean",
+            "title": "Is Reference",
+            "description": "The cluster holding most of the reference cluster; at most one."
+          },
+          "similarity_to_reference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similarity To Reference",
+            "description": "Likeness of its centre to the reference cluster's centre, or before one is picked to the largest cluster's; null with no clusters."
+          },
+          "from_sheets": {
+            "type": "boolean",
+            "title": "From Sheets",
+            "description": "Most of its members were cut from character sheets."
+          }
+        },
+        "type": "object",
+        "required": [
+          "members",
+          "size",
+          "cohesion",
+          "reference_share",
+          "is_reference",
+          "similarity_to_reference",
+          "from_sheets"
+        ],
+        "title": "FaceCluster"
+      },
+      "FaceClusters": {
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "faces": {
+            "type": "integer",
+            "title": "Faces",
+            "description": "How many of the person's pictures were clustered."
+          },
+          "reference_cluster": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Cluster",
+            "description": "The reference cluster's live picture ids; null when none is picked."
+          },
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/FaceCluster"
+            },
+            "type": "array",
+            "title": "Clusters",
+            "description": "The reference cluster's first, then largest first."
+          },
+          "unclustered": {
+            "items": {
+              "$ref": "#/components/schemas/UnclusteredFace"
+            },
+            "type": "array",
+            "title": "Unclustered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threshold",
+          "faces",
+          "reference_cluster",
+          "clusters",
+          "unclustered"
+        ],
+        "title": "FaceClusters"
       },
       "FaceLikenessMatchResponse": {
         "properties": {
@@ -41841,6 +42801,82 @@
         "title": "OperationResponse",
         "description": "One recorded operation as the API returns it."
       },
+      "PanelScore": {
+        "properties": {
+          "panel": {
+            "type": "integer",
+            "title": "Panel",
+            "description": "Which panel: 0-3 the passport photos, 4-5 the body photos, in the order the sheet is cut."
+          },
+          "box": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Box",
+            "description": "The face's box, `[left, top, right, bottom]` as fractions of the sheet's width and height."
+          },
+          "agreement": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement",
+            "description": "Mean similarity to the other panels' faces; null when no other panel has one."
+          },
+          "agrees": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agrees",
+            "description": "The agreement clears the bar a sheet's faces must hold to; null with no agreement."
+          },
+          "closeness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closeness",
+            "description": "Similarity to the reference faces: the best match among the character's, the mean over `reference_picture_ids`; null when there are none."
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close",
+            "description": "The closeness clears the bar for close to the references; null with no closeness."
+          }
+        },
+        "type": "object",
+        "required": [
+          "panel",
+          "box",
+          "agreement",
+          "agrees",
+          "closeness",
+          "close"
+        ],
+        "title": "PanelScore",
+        "description": "One panel's face, scored on its own."
+      },
       "ParameterAddress": {
         "properties": {
           "slot_label": {
@@ -42546,6 +43582,11 @@
           "deleted_id": {
             "type": "integer",
             "title": "Deleted Id"
+          },
+          "stopped_runs": {
+            "type": "integer",
+            "title": "Stopped Runs",
+            "default": 0
           }
         },
         "additionalProperties": true,
@@ -42815,6 +43856,19 @@
             ],
             "title": "Parent Character Id",
             "description": "The person this set sits under, if any."
+          },
+          "building": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building",
+            "description": "A training set still being built: what its build screen holds. Null once the set is finished, and for every other set."
           },
           "picture_count": {
             "anyOf": [
@@ -43446,6 +44500,131 @@
         "title": "ProposedMemberResponse",
         "description": "One model a proposal would put into a stack."
       },
+      "RankedSheet": {
+        "properties": {
+          "picture_id": {
+            "type": "integer",
+            "title": "Picture Id"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format",
+            "description": "The file's format, for loading it full size at `/pictures/{id}.{format}`."
+          },
+          "faces_read": {
+            "type": "boolean",
+            "title": "Faces Read",
+            "description": "Face extraction has run on it; until then nothing is scored."
+          },
+          "faces": {
+            "type": "integer",
+            "title": "Faces"
+          },
+          "agreement": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement"
+          },
+          "agreement_words": {
+            "type": "string",
+            "title": "Agreement Words"
+          },
+          "closeness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closeness",
+            "description": "Each face's best match among the character's reference cluster, or its mean similarity to the request's `reference_picture_ids`, averaged over the faces; null when there are none."
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "broken": {
+            "type": "boolean",
+            "title": "Broken",
+            "description": "More faces than panels: a panel holds more than one person."
+          },
+          "panels": {
+            "items": {
+              "$ref": "#/components/schemas/PanelScore"
+            },
+            "type": "array",
+            "title": "Panels",
+            "description": "Each panel's face scored on its own, in panel order; a panel with no face is left out."
+          },
+          "different_from": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Different From",
+            "description": "The other sheets asked about whose faces look like a different person: keeping both mixes two people in one set."
+          },
+          "cuts_cleanly": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cuts Cleanly",
+            "description": "Every cut found a clear line between the photos, through no face, and no panel holds two faces; null until the faces are read. A sheet that does not is still cut when used."
+          },
+          "cells": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Cells",
+            "description": "The six panels using it cuts, in panel order, as `[left, top, right, bottom]` fractions of the sheet; empty until the faces are read."
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_id",
+          "format",
+          "faces_read",
+          "faces",
+          "agreement",
+          "agreement_words",
+          "closeness",
+          "close",
+          "broken"
+        ],
+        "title": "RankedSheet",
+        "description": "One drawn sheet, scored by its own faces."
+      },
       "RecipeDeleted": {
         "properties": {
           "deleted": {
@@ -43589,6 +44768,39 @@
         "type": "object",
         "title": "RecipeValues",
         "description": "The checkpoints and LoRAs a workflow's kept pictures used, most first."
+      },
+      "ReferenceCluster": {
+        "properties": {
+          "picture_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Picture Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_ids"
+        ],
+        "title": "ReferenceCluster"
+      },
+      "ReferenceClusterRequest": {
+        "properties": {
+          "picture_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Picture Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_ids"
+        ],
+        "title": "ReferenceClusterRequest"
       },
       "RefreshReviewResponse": {
         "properties": {
@@ -44692,9 +45904,10 @@
             "default": 0
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "title": "ReviewReceiptResponse",
-        "description": "Outcome receipt over the review's resolved rows."
+        "description": "Outcome receipt over the review's resolved rows.\n\nA review that had known-answer controls mixed in also carries ``controls``:\n``{\"pos_confirmed\", \"pos_overturned\", \"neg_confirmed\", \"neg_overturned\",\n\"skipped\", \"pending\"}`` - earlier human POS / NEG verdicts the reviewer\nrepeated or contradicted. Controls change no label and are counted there\nonly, never in the four counts below. The key is absent otherwise."
       },
       "ReviewResponse": {
         "properties": {
@@ -44705,6 +45918,11 @@
           "tag": {
             "type": "string",
             "title": "Tag"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "near_neighbor"
           },
           "scope": {
             "additionalProperties": true,
@@ -44808,6 +46026,17 @@
               }
             ],
             "title": "Auto Resolvable"
+          },
+          "controls": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controls"
           }
         },
         "additionalProperties": true,
@@ -45989,6 +47218,11 @@
             ],
             "title": "Character Ids"
           },
+          "hold": {
+            "type": "boolean",
+            "title": "Hold",
+            "default": false
+          },
           "inputs": {
             "items": {
               "$ref": "#/components/schemas/RunInput"
@@ -46252,6 +47486,21 @@
         ],
         "title": "RunSample",
         "description": "One preview image ai-toolkit rendered during the run."
+      },
+      "RunStopped": {
+        "properties": {
+          "stopped": {
+            "type": "integer",
+            "title": "Stopped",
+            "description": "1 when the run was still going and was stopped, 0 when it had already ended."
+          }
+        },
+        "type": "object",
+        "required": [
+          "stopped"
+        ],
+        "title": "RunStopped",
+        "description": "``POST /workflows/runs/{run_id}/stop``."
       },
       "RunUpscale": {
         "properties": {
@@ -48012,6 +49261,218 @@
         ],
         "title": "ShareCopySkipped"
       },
+      "SheetIds": {
+        "properties": {
+          "picture_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Picture Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_ids"
+        ],
+        "title": "SheetIds"
+      },
+      "SheetPrompt": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "negative": {
+            "type": "string",
+            "title": "Negative"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt",
+          "negative",
+          "width",
+          "height"
+        ],
+        "title": "SheetPrompt",
+        "description": "The prompt, negative and canvas a sheet run draws with."
+      },
+      "SheetPromptRequest": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Description",
+            "default": ""
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Body",
+            "default": ""
+          },
+          "top": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Top",
+            "default": ""
+          },
+          "trousers": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Trousers",
+            "default": ""
+          },
+          "shoes": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Shoes",
+            "default": ""
+          },
+          "background": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Background",
+            "description": "What every photo stands in front of; empty is a plain light-grey studio.",
+            "default": ""
+          },
+          "framing": {
+            "type": "string",
+            "enum": [
+              "waist_up",
+              "mid_thigh",
+              "knees_up",
+              "full_body"
+            ],
+            "title": "Framing",
+            "default": "mid_thigh"
+          },
+          "subject": {
+            "type": "string",
+            "enum": [
+              "woman",
+              "man"
+            ],
+            "title": "Subject",
+            "default": "woman"
+          },
+          "proportions": {
+            "type": "string",
+            "enum": [
+              "typical",
+              "little_person",
+              "cartoon"
+            ],
+            "title": "Proportions",
+            "description": "The figure: a typical adult's, a little person's, or a cartoon's, about three heads tall.",
+            "default": "typical"
+          },
+          "trigger": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Trigger",
+            "default": ""
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "small",
+              "medium",
+              "large",
+              "4k"
+            ],
+            "title": "Size",
+            "default": "large"
+          },
+          "reference": {
+            "type": "boolean",
+            "title": "Reference",
+            "description": "The run feeds a reference picture: every photo names the person in it ahead of the description.",
+            "default": false
+          },
+          "layout": {
+            "type": "string",
+            "enum": [
+              "moss",
+              "prose",
+              "regions"
+            ],
+            "title": "Layout",
+            "description": "`moss` is MOSS-Image's layout JSON; `prose` is the same sheet as one sentence, for a model that takes no layout; `regions` is the layout JSON with its canvas size and captions that stand alone, for a sheet workflow made from another text-to-image one (ComfyUI-PixlStash's Layout Text Encode).",
+            "default": "moss"
+          }
+        },
+        "type": "object",
+        "title": "SheetPromptRequest",
+        "description": "What the sheet shows: the character, the build, the outfit and the framing."
+      },
+      "SheetRankRequest": {
+        "properties": {
+          "picture_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Picture Ids"
+          },
+          "reference_picture_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array",
+                "maxItems": 4
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Picture Ids",
+            "description": "The pictures the sheets were drawn from: closeness is the mean similarity to their faces instead of the best match among the character's reference cluster. An id with no faces counts for nothing."
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_ids"
+        ],
+        "title": "SheetRankRequest"
+      },
+      "SheetRanking": {
+        "properties": {
+          "sheets": {
+            "items": {
+              "$ref": "#/components/schemas/RankedSheet"
+            },
+            "type": "array",
+            "title": "Sheets"
+          },
+          "references": {
+            "type": "integer",
+            "title": "References",
+            "description": "How many reference faces closeness used."
+          }
+        },
+        "type": "object",
+        "required": [
+          "sheets",
+          "references"
+        ],
+        "title": "SheetRanking"
+      },
       "SignatureRequestModel": {
         "properties": {
           "signature": {
@@ -48761,7 +50222,7 @@
             },
             "type": "object",
             "title": "Excluded",
-            "description": "How many each reason sets aside, whether or not it is included; a picture can fail more than one."
+            "description": "How many each reason sets aside (other_people, near_duplicates, low_quality for the minimum score, low_likeness for the minimum likeness), whether or not it is included; a picture can fail more than one."
           },
           "would_add": {
             "additionalProperties": {
@@ -48769,7 +50230,7 @@
             },
             "type": "object",
             "title": "Would Add",
-            "description": "How many more would pass with only that reason included (0 when it already is)."
+            "description": "How many more would pass with only that reason included, or that minimum dropped (0 when it already is)."
           },
           "available": {
             "additionalProperties": {
@@ -50575,6 +52036,55 @@
         "title": "TrashRunResponse",
         "description": "Body of ``DELETE /model-folders/{folder_id}/runs/{run_name}``."
       },
+      "UnclusteredFace": {
+        "properties": {
+          "picture_id": {
+            "type": "integer",
+            "title": "Picture Id"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "similarity_to_reference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similarity To Reference"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format",
+            "description": "The file's format, as on a cluster member."
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_id",
+          "score",
+          "similarity_to_reference"
+        ],
+        "title": "UnclusteredFace"
+      },
       "UndoDeleteModelsRequest": {
         "properties": {
           "token": {
@@ -50869,6 +52379,23 @@
         "type": "object",
         "title": "UsedLook",
         "description": "One look this workflow's pictures were made with, saved or not.\n\nNot a saved recipe: it has no id, no name and no place in the tab's order,\nbecause nothing was authored. ``loras`` are file names with no strength -\na picture row stores none - and ``cover_picture_id`` is the newest picture\nof the group, which is where the Save dialog reads the strengths back from."
+      },
+      "UsedSheets": {
+        "properties": {
+          "picture_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Picture Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "picture_ids"
+        ],
+        "title": "UsedSheets",
+        "description": "The panels the chosen sheets became: six a sheet, passport photos first."
       },
       "ValidationError": {
         "properties": {
@@ -51233,6 +52760,18 @@
               }
             ],
             "title": "Type"
+          },
+          "reference_inputs": {
+            "type": "integer",
+            "title": "Reference Inputs",
+            "description": "How many pictures the graph reads as a reference while its sampler starts from an empty latent, so a run can draw at a size of its own from them. Read from a stored workflow's own graph; 0 for a workflow grouped from pictures.",
+            "default": 0
+          },
+          "sheet_layout": {
+            "type": "boolean",
+            "title": "Sheet Layout",
+            "description": "Whether the graph encodes its prompt with ComfyUI-PixlStash's Layout Text Encode, so it draws a character sheet's layout prompt as regions on any model: what `sheet-copy` makes of a text-to-image workflow. A stored workflow's own graph only.",
+            "default": false
           },
           "type_label": {
             "anyOf": [
@@ -53722,7 +55261,7 @@
               }
             ],
             "title": "Base Model Family",
-            "description": "The family of the base model the shelf identified this file as (`sdxl`, `flux1`, `krea2`, \u2026), filename guesses included: the same value as `base_model_family` on its `GET /adapters` or `GET /checkpoints` row, or null where the shelf cannot say. What a client compares a LoRA's `base_model_family` against to narrow the workflows it fits."
+            "description": "The family of the base model the shelf identified this file as (`sdxl`, `flux1`, `krea2`, \u2026), filename guesses included: the same value as `base_model_family` on its `GET /adapters` or `GET /checkpoints` row. A base model the shelf does not hold, cannot pin down to one file or has no family for takes the family its filename names; null where that names none. What a client compares a LoRA's `base_model_family` against to narrow the workflows it fits."
           },
           "mark": {
             "anyOf": [
