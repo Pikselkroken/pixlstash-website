@@ -896,6 +896,13 @@
         grid-template-columns: minmax(280px, 1fr) minmax(0, 1.6fr);
       }
 
+      /* A tall menu capture keeps its own shape in a narrow column. */
+      .update-card--menu {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.8fr);
+        align-items: center;
+      }
+
       kbd {
         font-family: var(--sans);
         font-size: 0.8em;
@@ -1019,8 +1026,13 @@
       @media (max-width: 980px) {
         .map-hero-head,
         .map-hero-body,
-        .update-card--solo.update-card--flip {
+        .update-card--solo.update-card--flip,
+        .update-card--menu {
           grid-template-columns: 1fr;
+        }
+
+        .map-detail .update-card--menu > img {
+          max-height: 480px;
         }
 
         .map-hero-head {
@@ -1219,6 +1231,27 @@
               </p>
             </div>
           </article>
+          <article class="update-card update-card--menu" style="margin-top: 20px">
+            <div class="update-card-body">
+              <p>
+                Everything for a person is on their menu. Right-click them in
+                the sidebar to <strong>Train LoRA…</strong>, sort their
+                <strong>Faces and reference cluster…</strong>,
+                <strong>Generate character sheets…</strong> or
+                <strong>Create a training set…</strong>.
+              </p>
+              <p>
+                Once they have a LoRA, <strong>Create with LoRA…</strong> runs
+                a workflow with it.
+              </p>
+            </div>
+            <img
+              class="zoomable-image"
+              src="assets/PersonMenuFinn.jpg"
+              alt="Finn's menu in the sidebar: Create with LoRA, Train LoRA, Faces and reference cluster, Generate character sheets and Create a training set"
+              loading="lazy"
+            />
+          </article>
         </div>
       </section>
 
@@ -1270,11 +1303,68 @@
                 shots and expressions, and leaves out near copies and other
                 people. Drag the slider to choose how many, then train.
               </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="map-detail" id="v2-sheets">
+        <span class="app-pin" aria-hidden="true">1</span>
+        <div>
+          <h2>Character sheets</h2>
+          <article class="update-card">
+            <img
+              class="zoomable-image"
+              src="assets/CharacterSheetsFinn.jpg"
+              alt="Four character sheets of Finn, each with four passport photos and two body photos, a likeness score under every sheet and on every photo, and the first sheet kept"
+              loading="lazy"
+            />
+            <div class="update-card-cols">
+              <div class="update-card-body">
+                <p>
+                  A character with few or no pictures can have them drawn.
+                  Choose <strong>Generate character sheets…</strong> on their
+                  menu, describe them or start from one of their pictures, and
+                  add clothes and a background.
+                </p>
+                <p>
+                  Each sheet draws the character six times: four passport
+                  photos, from the front, three-quarter and in profile, and two
+                  body photos.
+                </p>
+              </div>
+              <div class="update-card-body">
+                <p>
+                  Each sheet says how close it comes to the picture it was
+                  drawn from, and each photo on it says the same. Keep the
+                  sheets that look right: their photos become the character's
+                  pictures, ready for a training set.
+                </p>
+                <p>The rest stay in the Scrapheap.</p>
+              </div>
+            </div>
+          </article>
+          <article class="update-card" style="margin-top: 20px">
+            <div class="update-card-media-pair">
+              <img
+                class="zoomable-image"
+                src="assets/CharacterSheetBarry.jpg"
+                alt="The character sheet dialog for Barry, a ceramic garden gnome: a description, drawn from one of his reference pictures, with body framing, sheet count and size"
+                loading="lazy"
+              />
+              <img
+                class="zoomable-image"
+                src="assets/CharacterSheetsBarry.jpg"
+                alt="Four sheets of Barry the garden gnome with likeness scores, two of them kept"
+                loading="lazy"
+              />
+            </div>
+            <div class="update-card-body">
               <p>
-                <strong>Character sheets.</strong> A character with few or no
-                pictures can have them drawn: describe the character, or start
-                from one of their pictures, and keep the sheets that look
-                right. Their photos become the character's pictures.
+                Not only people. Barry is a ceramic garden gnome, drawn from one
+                of his pictures with no LoRA. Pick a character LoRA to hold the
+                face closer, and choose the sheet workflow at the top, such as
+                FLUX.2 Klein 9B or Qwen Image 2.1.
               </p>
             </div>
           </article>
@@ -1339,6 +1429,25 @@
                 <kbd>Ctrl</kbd>+<kbd>X</kbd> and <kbd>Ctrl</kbd>+<kbd>V</kbd>,
                 or create and rename folders from the tree. A move to another
                 drive checks every model when it arrives.
+              </p>
+            </div>
+          </article>
+          <article class="update-card update-card--solo" style="margin-top: 20px">
+            <img
+              class="zoomable-image"
+              src="assets/WorkflowsScreen.jpg"
+              alt="The Workflows workspace: the Run on menu with This PC connected and a render box offline, the sidebar by type and base model, workflow cards, and the inspector with models, LoRAs and parameters"
+              loading="lazy"
+            />
+            <div class="update-card-body">
+              <p>
+                Workflows has its own sidebar too, sorted by type and base
+                model. <strong>Run on</strong> at the top chooses which
+                ComfyUI runs them: this PC, or another machine on your network.
+              </p>
+              <p>
+                The inspector shows a workflow's models, LoRAs, parameters and
+                versions, and goes back to an earlier version in one click.
               </p>
             </div>
           </article>
