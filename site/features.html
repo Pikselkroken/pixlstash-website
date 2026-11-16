@@ -78,6 +78,7 @@
       .shot-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        grid-auto-flow: dense;
         gap: 18px;
       }
 
@@ -220,6 +221,21 @@
         height: 160px;
         object-fit: cover;
         object-position: top;
+      }
+
+      /* A whole-row shot, for screens too detailed to read at card size. */
+      .shot--wide {
+        grid-column: 1 / -1;
+      }
+
+      .shot--wide .shot-image-pair .shot-image-btn img {
+        height: auto;
+      }
+
+      @media (max-width: 700px) {
+        .shot--wide .shot-image-pair {
+          flex-direction: column;
+        }
       }
 
       .demo-teaser {
@@ -478,9 +494,9 @@
             <div class="shot-label"><h4>A Workflows screen</h4></div>
             <button class="shot-image-btn" type="button">
               <img
-                src="assets/Workflows.jpg"
-                data-full="assets/Workflows.jpg"
-                alt="The Workflows screen: a grid of workflow cards, each covered with the pictures it made and labelled with its checkpoint, LoRAs and type, beside the inspector for the selected workflow"
+                src="assets/WorkflowsScreen.jpg"
+                data-full="assets/WorkflowsScreen.jpg"
+                alt="The Workflows screen: the Run on menu choosing a ComfyUI, the sidebar by type and base model, a grid of workflow cards covered with the pictures each made, and the inspector for the selected workflow"
                 loading="lazy"
               />
             </button>
@@ -912,6 +928,51 @@
               it on your own GPU, each checkpoint gets previews, and the
               finished LoRA is on your shelf and attached to them. A run trained
               elsewhere opens its own page too.
+            </p>
+          </div>
+          <div class="shot">
+            <div class="shot-label"><h4>Face likeness clusters</h4></div>
+            <button class="shot-image-btn" type="button">
+              <img
+                src="assets/FaceClusters.jpg"
+                data-full="assets/FaceClusters.jpg"
+                alt="Finn's faces: clusters of look-alike faces, the reference cluster laid out by likeness to its centre, and an Accept down to slider"
+                loading="lazy"
+              />
+            </button>
+            <p>
+              See a person's faces grouped by who they look like and pick the
+              group that is them. That group steers likeness ranking and the
+              training set.
+            </p>
+          </div>
+          <div class="shot shot--wide">
+            <div class="shot-label"><h4>Character sheets</h4></div>
+            <div class="shot-image-pair">
+              <button class="shot-image-btn" type="button">
+                <img
+                  src="assets/CharacterSheetGenerationFinn.jpg"
+                  data-full="assets/CharacterSheetGenerationFinn.jpg"
+                  alt="The character sheet dialog for Finn: a description, drawn from one of his pictures, with clothes, a background, body framing, sheet count, size and proportions"
+                  loading="lazy"
+                />
+              </button>
+              <button class="shot-image-btn" type="button">
+                <img
+                  src="assets/CharacterSheetsFinn.jpg"
+                  data-full="assets/CharacterSheetsFinn.jpg"
+                  alt="Four character sheets of Finn, each with four passport photos and two body photos, a likeness score under every sheet and on every photo, and the first sheet kept"
+                  loading="lazy"
+                />
+              </button>
+            </div>
+            <p>
+              Draw training pictures for a character who has few or none.
+              Describe them or start from one of their pictures, and each sheet
+              draws them six times: four passport photos and two body photos.
+              Every sheet and photo says how close it comes to the reference;
+              keep the sheets that look right and their photos become the
+              character's pictures.
             </p>
           </div>
           <div class="shot">

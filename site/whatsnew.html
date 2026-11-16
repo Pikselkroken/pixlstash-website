@@ -7,7 +7,7 @@
     <title>What's New in PixlStash 2.0</title>
     <meta
       name="description"
-      content="What's new in PixlStash 2.0: train a LoRA from a person or a set and use it right away, a Models workspace that sorts and moves model files, tags that copy, paste and suggest themselves in search, and pictures copied out as their original files."
+      content="What's new in PixlStash 2.0: train a LoRA from a person or a set and use it right away, face likeness clusters, character sheets for training, a Models workspace that sorts and moves model files, tags that copy, paste and suggest themselves in search, and pictures copied out as their original files."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -761,7 +761,7 @@
       /* -- 2.0: the app map hero, a numbered section per pin -- */
       .map-hero-head {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
         gap: 32px;
         align-items: center;
         padding: 22px 26px;
@@ -773,7 +773,7 @@
         font-size: clamp(2rem, 3.6vw, 2.5rem);
         line-height: 1.05;
         letter-spacing: -0.01em;
-        white-space: nowrap;
+        text-wrap: balance;
       }
 
       .map-hero-head p {
@@ -786,6 +786,10 @@
       .map-hero-body {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 330px;
+      }
+
+      .map-hero-body .app-map {
+        align-self: start;
       }
 
       .map-hero-body .app-map > img {
@@ -830,19 +834,19 @@
         line-height: 1.5;
       }
 
+      /* The cards under each heading run the full width, like the hero. */
       .map-detail {
         margin-top: 44px;
         display: grid;
-        grid-template-columns: 52px minmax(0, 1fr);
-        gap: 18px;
         scroll-margin-top: 16px;
       }
 
-      .map-detail > .app-pin {
-        width: 44px;
-        height: 44px;
-        font-size: 1.15rem;
-        margin-top: 4px;
+      .map-detail > div {
+        display: contents;
+      }
+
+      .map-detail > div > :not(h2) {
+        grid-column: 1 / -1;
       }
 
       .map-detail > div > h2 {
@@ -880,6 +884,13 @@
 
       .update-card--solo.update-card--flip {
         grid-template-columns: minmax(280px, 1fr) minmax(0, 1.6fr);
+      }
+
+      /* A tall menu capture keeps its own shape in a narrow column. */
+      .update-card--menu {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.8fr);
+        align-items: center;
       }
 
       kbd {
@@ -1005,8 +1016,13 @@
       @media (max-width: 980px) {
         .map-hero-head,
         .map-hero-body,
-        .update-card--solo.update-card--flip {
+        .update-card--solo.update-card--flip,
+        .update-card--menu {
           grid-template-columns: 1fr;
+        }
+
+        .map-detail .update-card--menu > img {
+          max-height: 480px;
         }
 
         .map-hero-head {
@@ -1032,18 +1048,6 @@
       @media (max-width: 700px) {
         .map-hero-head {
           padding: 18px;
-        }
-
-        .map-detail {
-          grid-template-columns: 1fr;
-          gap: 10px;
-        }
-
-        .map-detail > .app-pin {
-          width: 36px;
-          height: 36px;
-          font-size: 1rem;
-          margin-top: 0;
         }
 
         .map-detail > div > h2 {
@@ -1085,11 +1089,12 @@
         <div class="map-hero-head">
           <div>
             <span class="release-kicker">PixlStash 2.0</span>
-            <h1>LoRA training and streamlined UI</h1>
+            <h1>LoRA training, face likeness clusters, character sheets and a streamlined UI</h1>
           </div>
           <p>
-            PixlStash 2.0 trains LoRAs from your people and sets, and the app
-            is split into three workspaces.
+            PixlStash 2.0 trains LoRAs from your people and sets, groups a
+            person's faces by likeness, draws character sheets for training,
+            and splits the app into three workspaces.
           </p>
         </div>
         <div class="map-hero-body">
@@ -1101,7 +1106,7 @@
             />
             <span class="app-ring" style="left: 9.8%; top: 61.3%; width: 11.5%; height: 3.1%"></span>
             <span class="app-pin" style="left: 8%; top: 62.9%" aria-hidden="true">1</span>
-            <span class="app-ring" style="left: 16.1%; top: 4.1%; width: 83.6%; height: 95.5%"></span>
+            <span class="app-ring" style="left: 16.1%; top: 4.1%; width: 83.6%; height: 95.5%; clip-path: polygon(-4px -4px, calc(100% + 4px) -4px, calc(100% + 4px) calc(100% + 4px), -4px calc(100% + 4px), -4px 77.2%, 6.6% 77.2%, 6.6% 45%, -4px 45%)"></span>
             <span class="app-pin" style="left: 19.4%; top: 12.9%" aria-hidden="true">2</span>
             <span class="app-ring" style="left: 42.1%; top: 0.3%; width: 15.9%; height: 3.2%"></span>
             <span class="app-pin" style="left: 59.4%; top: 1.9%" aria-hidden="true">3</span>
@@ -1112,8 +1117,10 @@
               <div>
                 <h2><a href="#v2-training">Train a LoRA and use it right away</a></h2>
                 <p>
-                  Select a person or a set and press Train LoRA. The finished
-                  LoRA is on the shelf and attached to them.
+                  Select a person or a set and press Train LoRA. Face likeness
+                  clusters pick the right pictures, character sheets fill in
+                  when there are none, and the finished LoRA is on the shelf
+                  and attached to them.
                 </p>
               </div>
             </li>
@@ -1144,7 +1151,6 @@
       </section>
 
       <section class="map-detail" id="v2-training">
-        <span class="app-pin" aria-hidden="true">1</span>
         <div>
           <h2>Train a LoRA from a person or a set, and use it right away</h2>
           <article class="update-card">
@@ -1183,11 +1189,164 @@
               </div>
             </div>
           </article>
+          <article class="update-card update-card--video" style="margin-top: 20px">
+            <video
+              class="zoomable-video"
+              src="assets/TrainingFinn.mp4"
+              aria-label="Following Finn's training run: the loss curve, the pictures used for training, and the preview images from each checkpoint"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <div class="update-card-body">
+              <p>
+                Follow the run while it trains. The run's page shows the loss,
+                the pictures it is training on, and the preview images from
+                each checkpoint.
+              </p>
+            </div>
+          </article>
+          <article class="update-card update-card--menu" style="margin-top: 20px">
+            <div class="update-card-body">
+              <p>
+                Everything for a person is on their menu. Right-click them in
+                the sidebar to <strong>Train LoRA…</strong>, sort their
+                <strong>Faces and reference cluster…</strong>,
+                <strong>Generate character sheets…</strong> or
+                <strong>Create a training set…</strong>.
+              </p>
+              <p>
+                Once they have a LoRA, <strong>Create with LoRA…</strong> runs
+                a workflow with it.
+              </p>
+            </div>
+            <img
+              class="zoomable-image"
+              src="assets/PersonMenuFinn.jpg"
+              alt="Finn's menu in the sidebar: Create with LoRA, Train LoRA, Faces and reference cluster, Generate character sheets and Create a training set"
+              loading="lazy"
+            />
+          </article>
+        </div>
+      </section>
+
+      <section class="map-detail" id="v2-faces">
+        <div>
+          <h2>Face likeness clusters</h2>
+          <article class="update-card">
+            <img
+              class="zoomable-image"
+              src="assets/FaceClusters.jpg"
+              alt="Finn's faces: clusters of look-alike faces in a list, the reference cluster laid out with each face's likeness to the centre, and an Accept down to slider"
+              loading="lazy"
+            />
+            <div class="update-card-cols">
+              <div class="update-card-body">
+                <p>
+                  Choose <strong>Faces and reference cluster…</strong> on a
+                  person's menu to see their faces grouped by who they look
+                  like. A few generated pictures of someone slightly different
+                  end up in a group of their own.
+                </p>
+              </div>
+              <div class="update-card-body">
+                <p>
+                  Pick the group that is the person and trim its least typical
+                  faces with the slider. That group then decides who the person
+                  is when ranking likeness and choosing a training set.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="update-card update-card--video" style="margin-top: 20px">
+            <video
+              class="zoomable-video"
+              src="assets/FaceClustersAndTrainingSets.mp4"
+              aria-label="Choosing Finn's reference cluster and inspecting its pictures, choosing the training set size, then starting and following training"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <div class="update-card-body">
+              <p>
+                Right-click a person and choose
+                <strong>Create a training set…</strong>. PixlStash picks the
+                best likeness and quality, spread across close-ups, full-body
+                shots and expressions, and leaves out near copies and other
+                people. Drag the slider to choose how many, then train.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="map-detail" id="v2-sheets">
+        <div>
+          <h2>Character sheets</h2>
+          <article class="update-card">
+            <img
+              class="zoomable-image"
+              src="assets/CharacterSheetsFinn.jpg"
+              alt="Four character sheets of Finn, each with four passport photos and two body photos, a likeness score under every sheet and on every photo, and the first sheet kept"
+              loading="lazy"
+            />
+            <div class="update-card-cols">
+              <div class="update-card-body">
+                <p>
+                  A character with few or no pictures can have them drawn.
+                  Choose <strong>Generate character sheets…</strong> on their
+                  menu, describe them or start from one of their pictures, and
+                  add clothes and a background.
+                </p>
+                <p>
+                  Each sheet draws the character six times: four passport
+                  photos, from the front, three-quarter and in profile, and two
+                  body photos.
+                </p>
+              </div>
+              <div class="update-card-body">
+                <p>
+                  Each sheet says how close it comes to the picture it was
+                  drawn from, and each photo on it says the same. Keep the
+                  sheets that look right: their photos become the character's
+                  pictures, ready for a training set.
+                </p>
+                <p>The rest stay in the Scrapheap.</p>
+              </div>
+            </div>
+          </article>
+          <article class="update-card" style="margin-top: 20px">
+            <div class="update-card-media-pair">
+              <img
+                class="zoomable-image"
+                src="assets/CharacterSheetBarry.jpg"
+                alt="The character sheet dialog for Barry, a ceramic garden gnome: a description, drawn from one of his reference pictures, with body framing, sheet count and size"
+                loading="lazy"
+              />
+              <img
+                class="zoomable-image"
+                src="assets/CharacterSheetsBarry.jpg"
+                alt="Four sheets of Barry the garden gnome with likeness scores, two of them kept"
+                loading="lazy"
+              />
+            </div>
+            <div class="update-card-body">
+              <p>
+                Not only people. Barry is a ceramic garden gnome, drawn from one
+                of his pictures with no LoRA. Pick a character LoRA to hold the
+                face closer, and choose the sheet workflow at the top, such as
+                FLUX.2 Klein 9B or Qwen Image 2.1.
+              </p>
+            </div>
+          </article>
         </div>
       </section>
 
       <section class="map-detail" id="v2-lightbox">
-        <span class="app-pin" aria-hidden="true">2</span>
         <div>
           <h2>Improved Lightbox view and editing</h2>
           <article class="update-card update-card--video">
@@ -1221,7 +1380,6 @@
       </section>
 
       <section class="map-detail" id="v2-models">
-        <span class="app-pin" aria-hidden="true">3</span>
         <div>
           <h2>Much improved model browser</h2>
           <article class="update-card update-card--solo">
@@ -1247,11 +1405,29 @@
               </p>
             </div>
           </article>
+          <article class="update-card update-card--solo" style="margin-top: 20px">
+            <img
+              class="zoomable-image"
+              src="assets/WorkflowsScreen.jpg"
+              alt="The Workflows workspace: the Run on menu with This PC connected and a render box offline, the sidebar by type and base model, workflow cards, and the inspector with models, LoRAs and parameters"
+              loading="lazy"
+            />
+            <div class="update-card-body">
+              <p>
+                Workflows has its own sidebar too, sorted by type and base
+                model. <strong>Run on</strong> at the top chooses which
+                ComfyUI runs them: this PC, or another machine on your network.
+              </p>
+              <p>
+                The inspector shows a workflow's models, LoRAs, parameters and
+                versions, and goes back to an earlier version in one click.
+              </p>
+            </div>
+          </article>
         </div>
       </section>
 
       <section class="map-detail" id="v2-tags">
-        <span class="app-pin" aria-hidden="true">4</span>
         <div>
           <h2>Copy and paste tags</h2>
           <article class="update-card update-card--solo update-card--flip">
@@ -1279,7 +1455,6 @@
       </section>
 
       <section class="map-detail" id="v2-files">
-        <span class="app-pin" aria-hidden="true">5</span>
         <div>
           <h2>Pictures leave as the original files</h2>
           <article class="update-card update-card--solo">
