@@ -703,7 +703,7 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Text to image</span>
-                  <span class="wf-desc">SamplerLCM 1.10 to 0.90, 6 steps, a blank 512 x 512 picture.</span>
+                  <span class="wf-desc">SamplerLCM 1.10 to 0.90, 6 steps, a blank 32 x 32 picture for step 1.</span>
                 </span>
               </a>
             </article>
@@ -744,7 +744,7 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Text to image</span>
-                  <span class="wf-desc">LCM with the blank picture, through PixlStash's loaders.</span>
+                  <span class="wf-desc">LCM with the blank picture for step 1, through PixlStash's loaders.</span>
                 </span>
               </a>
             </article>
@@ -835,8 +835,8 @@
                 <td>Everything</td>
               </tr>
               <tr>
-                <td>A blank 512 x 512 <code>EmptyImage</code> into <code>image_1</code>, no VAE</td>
-                <td>Less crunch, but seeds draw more alike people</td>
+                <td>A blank 32 x 32 <code>EmptyImage</code> into <code>image_1</code>, no VAE, for step 1 only: <code>ConditioningSetTimestepRange</code> 0 to 0.1, a text-only encoder for the rest</td>
+                <td>Less crunch, and most of the variety kept</td>
                 <td>Text-to-image only</td>
               </tr>
               <tr>
@@ -1031,6 +1031,28 @@
           first two.
         </p>
         <p>
+          <strong>And it keeps the skin clean.</strong> At the size people
+          render (3552 x 4736), the blank picture for step 1 only gives the same
+          clean skin as all six steps, where euler etches it. This is the
+          setting PixlStash's text-to-image and sheet workflows use, and the
+          downloadable workflows above, with the blank picture at 32 x 32,
+          since its size makes no difference.
+        </p>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig16_4k_step1.jpg">
+            <img
+              src="assets/minimax-h3-image/fig16_4k_step1.jpg"
+              width="1956"
+              height="2006"
+              loading="lazy"
+              alt="Face crops at 1:1 from 3552 x 4736 pictures: euler, the blank picture for all six steps and for step 1 only"
+            />
+          </a>
+          <figcaption>
+            <em>1:1 crops between the eyes at 3552 x 4736, seed 3001, the three prompts. Left to right: euler, the blank picture for all 6 steps, for step 1 only.</em>
+          </figcaption>
+        </figure>
+        <p>
           Colour: on these portraits the blank picture did not lower saturation
           (mean CIELAB chroma 13.4 without it, 14.4 with it), so the calmer
           colour seen on the sheets above is not confirmed as a general effect.
@@ -1154,52 +1176,50 @@
 
         <h2>Sheets from a reference picture</h2>
         <p>
-          LCM keeps the reference's person at least as well as euler. Likeness is
-          InsightFace similarity to the reference face, averaged over six photos
-          and two seeds:
+          When a sheet is drawn from a reference picture, the person comes from
+          that picture, so likeness matters most. Two people, two reference
+          pictures each, four seeds, LCM against euler. Likeness is InsightFace
+          similarity to the reference face, averaged over the six photos of a
+          sheet and the four seeds; higher is closer.
         </p>
         <div class="table-wrap" tabindex="0" role="region" aria-labelledby="likeness-caption">
           <table>
-            <caption id="likeness-caption" class="sr-only">Likeness to the reference face by sampler, woman and man</caption>
+            <caption id="likeness-caption" class="sr-only">Likeness to the reference face by sampler, for two people with two reference pictures each</caption>
             <thead>
               <tr>
-                <th scope="col">Sampler</th>
-                <th scope="col" class="num">Woman</th>
-                <th scope="col" class="num">Man</th>
+                <th scope="col">Reference</th>
+                <th scope="col" class="num">LCM</th>
+                <th scope="col" class="num">euler (official)</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>LCM</td>
-                <td class="num"><strong>0.63</strong></td>
-                <td class="num"><strong>0.65</strong></td>
-              </tr>
-              <tr>
-                <td>euler 2, then LCM 4</td>
-                <td class="num">0.62</td>
-                <td class="num">0.64</td>
-              </tr>
-              <tr>
-                <td>euler (official)</td>
-                <td class="num">0.57</td>
-                <td class="num">0.62</td>
-              </tr>
+              <tr><td>Woman, reference 1</td><td class="num"><strong>0.64</strong></td><td class="num">0.60</td></tr>
+              <tr><td>Woman, reference 2</td><td class="num"><strong>0.69</strong></td><td class="num">0.66</td></tr>
+              <tr><td>Man, reference 1</td><td class="num"><strong>0.67</strong></td><td class="num">0.63</td></tr>
+              <tr><td>Man, reference 2</td><td class="num"><strong>0.73</strong></td><td class="num">0.70</td></tr>
             </tbody>
           </table>
         </div>
+        <p>
+          <strong>LCM keeps the person better than euler every time:</strong>
+          it scores higher in all 16 pairs of the same reference and seed. The
+          reference picture matters more than the sampler, though: each
+          person's second reference scores clearly higher than the first, with
+          either sampler.
+        </p>
 
         <figure>
-          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig5_reference.jpg">
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig15_reference.jpg">
             <img
-              src="assets/minimax-h3-image/fig5_reference.jpg"
-              width="1440"
-              height="1040"
+              src="assets/minimax-h3-image/fig15_reference.jpg"
+              width="1462"
+              height="1684"
               loading="lazy"
-              alt="Reference pictures against sheets drawn with LCM and with euler"
+              alt="Four reference pictures, each beside the first photo of a sheet drawn from it with LCM and with euler"
             />
           </a>
           <figcaption>
-            <em>Reference, then a sheet's first photo with LCM and with euler.</em>
+            <em>Each reference, then the first photo of a sheet drawn from it with LCM and with euler, seed 3141. The number is that sheet's likeness.</em>
           </figcaption>
         </figure>
 
@@ -1276,8 +1296,8 @@
         <h2>In PixlStash and in plain ComfyUI</h2>
         <p>
           PixlStash v2.0.2's MiniMax H3 Image text-to-image and sheet workflows
-          use LCM, with the blank picture where there is no input picture; its
-          inpaint workflow still uses the template's euler. Its optional Photo
+          use LCM, with a 32 x 32 blank picture for step 1 where there is no input picture; its
+          inpaint workflow uses LCM too. Its optional Photo
           look adds camera, light and skin lines at run time, leaving the user's
           prompt untouched.
         </p>
