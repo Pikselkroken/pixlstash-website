@@ -685,6 +685,27 @@
         width: 128px;
         height: 128px;
         border-radius: var(--radius-md);
+        object-fit: cover;
+      }
+
+      .needs-you-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .needs-you-note {
+        margin: 0;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+
+      .needs-you-note strong {
+        display: block;
+        color: var(--text);
+        font-family: var(--display);
       }
 
       .needs-you-text {
@@ -783,19 +804,22 @@
         </div>
         </div>
 
-        <a class="needs-you-card" href="report.html">
-          <img
-            src="assets/PixlStashNeedsYou.jpg"
-            width="256"
-            height="256"
-            alt="PixlStash needs you!"
-          />
-          <span class="needs-you-text"
-            >Found a bug, or missing something? Most reports get a reply within
-            a day.</span
-          >
-          <span class="needs-you-link">Report it &rarr;</span>
-        </a>
+        <div class="needs-you-stack">
+          <p class="needs-you-note">
+            <strong>PixlStash needs you!</strong>
+            <a class="needs-you-link" href="report.html">Found a bug? Report it &rarr;</a>
+          </p>
+          <a class="needs-you-card" href="minimax-h3-image.html">
+            <img
+              src="assets/minimax-h3-image/fig1_official_vs_fixed.jpg"
+              width="256"
+              height="256"
+              alt="Improving MiniMax H3 Image"
+            />
+            <span class="needs-you-text">Improving MiniMax H3 Image</span>
+            <span class="needs-you-link">See how &rarr;</span>
+          </a>
+        </div>
       </div>
 
       <section class="launch">
