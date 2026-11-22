@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniMax H3 Image without the crunch | PixlStash</title>
+    <meta
+      name="description"
+      content="Two stock ComfyUI changes take the crunch out of MiniMax H3 Image, and the prompt takes out most of the rest. The tests, the figures and the standalone workflow."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tiny5&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        if (localStorage.getItem("pixlstash-theme") === "light")
+          document.documentElement.setAttribute("data-theme", "light");
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="pixlstash.css" />
+    <style>
+      .report {
+        max-width: 760px;
+        margin: 0 auto;
+        font-size: 1.02rem;
+        line-height: 1.65;
+      }
+
+      .report-byline {
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+
+      .report h2 {
+        font-size: 1.6rem;
+        margin: 48px 0 14px;
+        scroll-margin-top: 24px;
+      }
+
+      .report p,
+      .report li {
+        color: var(--text);
+      }
+
+      .report a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .report code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+      }
+
+      .report figure {
+        margin: 28px 0;
+        break-inside: avoid;
+      }
+
+      .report figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+      }
+
+      .report figcaption {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+
+      .report .table-wrap {
+        overflow-x: auto;
+        margin: 20px 0;
+      }
+
+      .report table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .report th,
+      .report td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--divider);
+        vertical-align: top;
+      }
+
+      .report th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .report-pdf {
+        margin: 0 0 8px;
+      }
+
+      .workflows {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--panel);
+        padding: 4px 20px 16px;
+        margin: 8px 0 0;
+      }
+
+      .workflows h2 {
+        margin: 14px 0 6px;
+        font-size: 1.3rem;
+      }
+
+      .workflows h3 {
+        font-size: 1rem;
+        margin: 0 0 8px;
+      }
+
+      .workflows-note,
+      .workflows-models {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 0 0 10px;
+      }
+
+      .workflows-groups {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+      }
+
+      .workflows ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .workflows li {
+        margin-bottom: 8px;
+      }
+
+      .workflows-models-list {
+        margin-top: 4px;
+      }
+
+      .workflows-models-list li {
+        word-break: break-all;
+      }
+
+      @media (max-width: 680px) {
+        .report h2 {
+          font-size: 1.35rem;
+        }
+      }
+
+      .print-only {
+        display: none;
+      }
+
+      @media print {
+        @page {
+          size: A4;
+          margin: 18mm 16mm;
+        }
+
+        /* Plain paper: white ground, dark text, no bands, no chrome. */
+        :root {
+          color-scheme: light;
+        }
+
+        html,
+        body {
+          background: #fff !important;
+          color: #222 !important;
+        }
+
+        #nav-placeholder,
+        .nav,
+        .page-footer,
+        .report-pdf,
+        .download-btn {
+          display: none !important;
+        }
+
+        .workflows {
+          background: none !important;
+          border: none;
+          padding: 0;
+          break-inside: avoid;
+        }
+
+        .workflows .workflows-groups {
+          display: block;
+        }
+
+        .workflows a {
+          color: #222;
+        }
+
+        .print-only {
+          display: block;
+          font-size: 8.5pt;
+          color: #666;
+          margin: 4px 0 18px;
+        }
+
+        .shell {
+          padding: 0;
+          max-width: none;
+        }
+
+        .report,
+        .report p,
+        .report li,
+        .report td,
+        .report th,
+        .report h2,
+        .report-byline,
+        .report figcaption,
+        .page-hero h1 {
+          color: #222 !important;
+          background: none !important;
+        }
+
+        .report {
+          max-width: none;
+          font-size: 10.5pt;
+          line-height: 1.5;
+        }
+
+        .report figure img,
+        .report table {
+          border-color: #bbb;
+        }
+
+        .report h2 {
+          break-after: avoid;
+          margin-top: 24px;
+        }
+
+        .report h2 + p,
+        .report h2 + .table-wrap {
+          break-before: avoid;
+        }
+
+        .report table,
+        .report tr {
+          break-inside: avoid;
+        }
+
+        .report a {
+          color: inherit;
+          text-decoration: underline;
+        }
+
+        .report a[href^="http"]::after {
+          content: " (" attr(href) ")";
+          font-size: 0.8em;
+          color: #444;
+          word-break: break-all;
+        }
+
+        .report figcaption {
+          break-before: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div id="nav-placeholder"></div>
+      <script src="nav.js"></script>
+
+      <main class="report">
+        <header class="page-hero">
+          <h1>MiniMax H3 Image without the crunch</h1>
+          <p class="report-byline">22 Nov 2026 · PixlStash Maintainer</p>
+          <p class="report-pdf">
+            <a class="download-btn" href="minimax-h3-image.pdf">Download the PDF</a>
+          </p>
+          <p class="print-only">PixlStash · pixlstash.dev/minimax-h3-image.html</p>
+        </header>
+
+        <section class="workflows" id="workflows" aria-labelledby="workflows-heading">
+          <h2 id="workflows-heading">Workflows</h2>
+          <p class="workflows-note">
+            Drag a file onto ComfyUI, or open it from the Workflow menu.
+          </p>
+          <div class="workflows-groups">
+            <div class="workflows-group">
+              <h3>Standard ComfyUI (stock nodes only)</h3>
+              <ul>
+                <li>
+                  <a href="assets/minimax-h3-image/workflows/minimax-h3-image-t2i.json" download>Text to image</a>:
+                  SamplerLCM 1.10 to 0.90, simple scheduler, 6 steps, a blank 512 x 512 picture; 3552 x 4736.
+                </li>
+                <li>
+                  <a href="assets/minimax-h3-image/workflows/minimax-h3-image-keep-a-seed.json" download>Keep a seed</a>:
+                  One euler step, then five LCM steps, text only: use the prompt and seed of a picture whose person you want to keep.
+                </li>
+              </ul>
+              <p class="workflows-models">
+                Model files, the official ones as in ComfyUI's own template:
+              </p>
+              <ul class="workflows-models-list">
+                <li>
+                  Diffusion model, into <code>models/diffusion_models</code>:
+                  <a href="https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors">minimax_h3_image_pruned_int8_convrot.safetensors</a>
+                </li>
+                <li>
+                  Text encoder, into <code>models/text_encoders</code>:
+                  <a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors">qwen3vl_32b_minimax_h3_int8_convrot.safetensors</a>
+                </li>
+                <li>
+                  VAE, into <code>models/vae</code>:
+                  <a href="https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors">minimax_h3_image_vae_fp16.safetensors</a>
+                </li>
+              </ul>
+            </div>
+            <div class="workflows-group">
+              <h3>PixlStash nodes (needs ComfyUI-PixlStash)</h3>
+              <p class="workflows-models">
+                Load the same model files by their hash through PixlStash's
+                loader nodes; the sheet workflows expect PixlStash's sheet
+                prompt. Install the
+                <a href="https://github.com/Pikselkroken/ComfyUI-PixlStash">ComfyUI-PixlStash</a>
+                pack first.
+              </p>
+              <ul>
+                <li>
+                  <a href="assets/minimax-h3-image/workflows/minimax-h3-image-t2i-pixlstash.json" download>Text to image</a>
+                </li>
+                <li>
+                  <a href="assets/minimax-h3-image/workflows/minimax-h3-image-sheet-pixlstash.json" download>Character sheet</a>
+                </li>
+                <li>
+                  <a href="assets/minimax-h3-image/workflows/minimax-h3-image-sheet-from-reference-pixlstash.json" download>Character sheet from a reference picture</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <p class="report-lede">
+          ComfyUI's official MiniMax H3 Image template gives crunchy, over-sharpened skin. Two stock-node changes fix it, and the prompt fixes the rest.
+        </p>
+        <p>
+          These tests were made to set good defaults for
+          <a href="https://pixlstash.dev">PixlStash</a>'s MiniMax H3 Image
+          workflows, and are shared because they apply to any ComfyUI setup.
+          They build on community work, credited at the end.
+        </p>
+
+        <h2>The fix</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Effect</th>
+                <th>Use for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SamplerLCM: <code>s_noise</code> 1.10 to 0.90, simple scheduler, 6 steps, CFG 1</td>
+                <td>No crunch</td>
+                <td>Everything</td>
+              </tr>
+              <tr>
+                <td>A blank 512 x 512 <code>EmptyImage</code> into <code>image_1</code>, no VAE</td>
+                <td>Natural colour and skin tone</td>
+                <td>Text-to-image only</td>
+              </tr>
+              <tr>
+                <td>Describe camera, light and skin; drop "photorealistic"</td>
+                <td>Less airbrushed skin</td>
+                <td>Every prompt</td>
+              </tr>
+              <tr>
+                <td>Describe grid panels instead of numbering them</td>
+                <td>No digits drawn into the photos</td>
+                <td>Sheets and grids</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          No help: a 16 MP canvas instead of 4 MP, or an nvfp4 text encoder
+          instead of int8. dpmpp_2m and res_multistep break the picture.
+        </p>
+
+        <h2>Method</h2>
+        <p>
+          Each comparison changes one thing: same prompt, seed and canvas, with
+          faces compared as 1:1 crops. A rebuilt workflow was first checked to
+          reproduce the original pixel for pixel. Likeness to a reference
+          picture is scored with InsightFace. Most tests are 5280 x 3168
+          character sheets of three people: a young woman with freckles, a
+          bearded man in his forties and a woman with a black bob. Model files:
+          the official int8 ones.
+        </p>
+
+        <h2>The official template</h2>
+        <p>
+          Euler, simple scheduler, 6 steps: etched skin, blotchy freckles, wiry
+          hair and oversaturated colour. Neither a 16 MP canvas nor the smaller
+          nvfp4 text encoder (15.7 GB against 27 GB) changed that. The sampler
+          was the cause.
+        </p>
+
+        <h2>LCM and the blank picture</h2>
+        <p>
+          <strong>SamplerLCM removes the crunch.</strong> The settings come from
+          u/LilBrownBebeShoes's
+          <a href="https://www.reddit.com/r/StableDiffusion/comments/1xt9ocv/minimax_h3_image_20mp_workflow/">20MP workflow</a>,
+          which credits Kijai's testing. Less noise than 1.10 to 0.90 turned
+          skin blotchy; more was no better.
+        </p>
+        <p>
+          <strong>The blank picture calms colour and skin tone.</strong> It
+          comes from Kijai's "text with empty image" mode in
+          <a href="https://github.com/kijai/ComfyUI-KJNodes">ComfyUI-KJNodes</a>.
+          It does not fix the crunch, and only text-to-image needs it: edits and
+          reference sheets already have a picture. Kijai's mode uses it for the
+          first 2 of 6 steps; these workflows keep it for all 6, and the two were
+          not compared.
+        </p>
+
+        <figure>
+          <img
+            src="assets/minimax-h3-image/fig1_official_vs_fixed.jpg"
+            width="1600"
+            height="1368"
+            loading="lazy"
+            alt="The official template against LCM plus the blank picture, same prompt and seed"
+          />
+          <figcaption>
+            <em>Same prompt and seed. Left: official template. Right: LCM plus the blank picture. Below: a face at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <p>
+          With the blank picture, the unnamed sweater goes from saturated teal to
+          muted navy, and skin looks warmer and more natural, for all three
+          people. It also settles the composition, so every sampler draws much
+          the same picture. Its size hardly matters: 32 x 32, 512 x 512 and 1024
+          x 1024 gave nearly identical pictures.
+        </p>
+
+        <figure>
+          <img
+            src="assets/minimax-h3-image/fig4_blank_picture.jpg"
+            width="1200"
+            height="1932"
+            loading="lazy"
+            alt="LCM with and without the blank picture, three people"
+          />
+          <figcaption>
+            <em>LCM only (left) against LCM plus the blank picture (right), faces at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <h2>Keeping a seed's person</h2>
+        <p>
+          The fix changes the person a seed draws. To keep that person, run
+          euler for 1 step and LCM for the other 5 (<code>SplitSigmas</code> at
+          1, <code>DisableNoise</code> on the LCM part). The person stays and the
+          worst crunch goes, but the picture is not fully rescued: a salvage, not
+          the fix. More euler steps keep more crunch.
+        </p>
+
+        <figure>
+          <img
+            src="assets/minimax-h3-image/fig3_euler_vs_split.jpg"
+            width="960"
+            height="1000"
+            loading="lazy"
+            alt="Euler 6 steps against euler 1 plus LCM 5"
+          />
+          <figcaption>
+            <em>Euler 6 (left) against euler 1 + LCM 5 (right), faces at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <h2>Sheets from a reference picture</h2>
+        <p>
+          LCM keeps the reference's person at least as well as euler. Likeness is
+          InsightFace similarity to the reference face, averaged over six photos
+          and two seeds:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sampler</th>
+                <th>Woman</th>
+                <th>Man</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>LCM</td>
+                <td><strong>0.63</strong></td>
+                <td><strong>0.65</strong></td>
+              </tr>
+              <tr>
+                <td>euler 2, then LCM 4</td>
+                <td>0.62</td>
+                <td>0.64</td>
+              </tr>
+              <tr>
+                <td>euler (official)</td>
+                <td>0.57</td>
+                <td>0.62</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure>
+          <img
+            src="assets/minimax-h3-image/fig5_reference.jpg"
+            width="1440"
+            height="1048"
+            loading="lazy"
+            alt="Reference pictures against sheets drawn with LCM and with euler"
+          />
+          <figcaption>
+            <em>Reference, then a sheet's first photo with LCM and with euler.</em>
+          </figcaption>
+        </figure>
+
+        <h2 id="the-prompt">The prompt</h2>
+        <ul>
+          <li>
+            <strong>Numbered panels get drawn.</strong> "(1)" to "(6)" in a sheet
+            prompt appeared as digits in the photos; listing the views without
+            numbers stopped it.
+          </li>
+          <li>
+            <strong>Describe the photo, not its quality.</strong> "Photorealistic"
+            pulls toward a render; camera, light and skin words pull toward a
+            photo.
+          </li>
+          <li>
+            <strong>Skin.</strong> "True-to-life skin" gave airbrushed faces;
+            describing texture fixed that but aged them. The wording that kept
+            realism without the ageing:
+            <em>"real skin with its natural texture and a little shine, a few small marks, no makeup, no beauty filter, nothing airbrushed, smoothed, retouched or sharpened, a touch of sensor noise and a few flyaway hairs."</em>
+          </li>
+          <li>
+            <strong>Light words work</strong> (golden hour, street light, flash,
+            office, overcast, winter, dusk); "early camera phone" and "Polaroid"
+            barely register. "Pores" ages young faces, makeup feminises men, and
+            "softbox" draws the softbox.
+          </li>
+        </ul>
+
+        <figure>
+          <img
+            src="assets/minimax-h3-image/fig6_photo_look.jpg"
+            width="1920"
+            height="728"
+            loading="lazy"
+            alt="Photo look variants C to C6 for two women"
+          />
+          <figcaption>
+            <em>Skin wording from "true-to-life skin" (C) to the final wording (C6), same seed.</em>
+          </figcaption>
+        </figure>
+
+        <h2>In PixlStash and in plain ComfyUI</h2>
+        <p>
+          PixlStash v2.0.2's MiniMax H3 Image text-to-image and sheet workflows
+          use LCM, with the blank picture where there is no input picture; its
+          inpaint workflow still uses the template's euler. Its optional Photo
+          look adds camera, light and skin lines at run time, leaving the user's
+          prompt untouched.
+        </p>
+        <p>
+          Stock-node workflows for plain ComfyUI, using the official model files,
+          are linked at <a href="#workflows">the top of the web version</a>:
+          text-to-image with the fix, and the keep-a-seed variant.
+        </p>
+
+        <h2>Limits</h2>
+        <p>
+          One or two seeds and two or three people per comparison, mostly
+          portraits, judged by eye except likeness. Not tested: the blank picture
+          for only the first steps, more than 6 steps, other schedulers, and LCM
+          for edits and inpainting.
+        </p>
+
+        <h2>Credits</h2>
+        <ul>
+          <li>
+            u/LilBrownBebeShoes, for the
+            <a href="https://www.reddit.com/r/StableDiffusion/comments/1xt9ocv/minimax_h3_image_20mp_workflow/">MiniMax H3 Image 20MP workflow</a>,
+            the starting point.
+          </li>
+          <li>
+            Kijai, for the LCM settings (as credited in that post) and the
+            empty-image method in
+            <a href="https://github.com/kijai/ComfyUI-KJNodes">ComfyUI-KJNodes</a>.
+          </li>
+          <li>
+            <a href="https://dev.to/furkangozukara/new-minimax-h3-image-preset-improves-errors-in-tiny-details-significantly-2ob">Furkan Gözükara</a>,
+            <a href="https://github.com/igorls/comfyui-h3-sampler">igorls</a>,
+            <a href="https://pixelailabs.com/blog/minimax-h3-image-comfyui-realistic-photos">PixelAI Labs</a>
+            and
+            <a href="https://huggingface.co/vyrekai/minimax-h3-image-comfyui-workflows">vyrekai</a>,
+            for related write-ups and workflows.
+          </li>
+          <li>
+            MiniMax, for releasing
+            <a href="https://github.com/MiniMax-AI/MiniMax-H3-Image">MiniMax H3 Image</a>
+            as open weights.
+          </li>
+        </ul>
+
+        <div class="page-footer">
+          <p>
+            <a href="index.html">Back to PixlStash home</a>
+            &nbsp;·&nbsp;
+            <a href="introduction.html">Getting started</a>
+          </p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
