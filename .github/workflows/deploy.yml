@@ -4,10 +4,15 @@ name: Deploy pixlstash.dev
 # rollback, or to refresh /prerelease/) by hand:
 #
 #   gh workflow run deploy.yml --ref v2.0.0
+#
+# Pushing the test branch puts its site/ at pixlstash.dev/test/, next to the
+# newest vX.Y.Z tag as the stable site. Every deploy carries /test/ along.
 on:
   push:
     tags:
       - '**'
+    branches:
+      - test
   workflow_dispatch:
 
 permissions: {}
@@ -27,16 +32,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # main carries copy for a version that may not be out yet, so a branch
-      # never becomes the stable site.
-      - name: Refuse anything but a tag
-        if: github.ref_type != 'tag'
+      # never becomes the stable site. The test branch only fills /test/.
+      - name: Refuse anything but a tag or the test branch
+        if: github.ref_type != 'tag' && github.ref != 'refs/heads/test'
         run: |
           echo "::error::Run this on a tag: gh workflow run deploy.yml --ref <tag>"
           exit 1
 
+      # ponytail: a test deploy takes the newest tag, so it undoes a rollback
+      # to an older tag; redeploy that tag by hand afterwards.
+      - name: Pick the tag for the stable site
+        id: stable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG=$(gh api --paginate "repos/$GITHUB_REPOSITORY/tags" --jq '.[].name' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          fi
+          echo "Stable site: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Check out the tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ steps.stable.outputs.tag }}
+          persist-credentials: false
+
+      # Missing branch: no /test/.
+      - name: Check out the test branch
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: test
+          path: testbranch
+          sparse-checkout: site
           persist-credentials: false
 
       - name: Setup Pages
@@ -88,6 +120,11 @@ jobs:
           fi
           if [ -z "$RC_TAG" ]; then
             python3 scripts/build_prerelease_site.py build --site-dir _site
+          fi
+          if [ -d testbranch/site ]; then
+            cp -r testbranch/site _site/test
+            find _site/test -name '*.html' -exec sed -i \
+              '0,/<head>/s||<head>\n    <meta name="robots" content="noindex" />|' {} +
           fi
 
       - name: Upload website artifact
