@@ -331,6 +331,24 @@
         line-height: 1.5;
       }
 
+      /* The PixlStash box carries a picture like a card. */
+      .wf-info--pic {
+        padding: 0;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      .wf-info--pic .wf-pic img {
+        object-position: left top;
+      }
+
+      .wf-info-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px 14px;
+      }
+
       .wf-info-text a {
         color: var(--accent);
         text-decoration: underline;
@@ -685,7 +703,7 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Text to image</span>
-                  <span class="wf-desc">SamplerLCM 1.10 to 0.90, simple scheduler, 6 steps, a blank 512 x 512 picture; 3552 x 4736.</span>
+                  <span class="wf-desc">SamplerLCM 1.10 to 0.90, 6 steps, a blank 512 x 512 picture.</span>
                 </span>
               </a>
             </article>
@@ -697,7 +715,7 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Keep a seed</span>
-                  <span class="wf-desc">One euler step, then five LCM steps, text only: use the prompt and seed of a picture whose person you want to keep.</span>
+                  <span class="wf-desc">Euler for 1 step, then LCM for 5: keeps a seed's person.</span>
                 </span>
               </a>
             </article>
@@ -709,13 +727,13 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Sheet from reference</span>
-                  <span class="wf-desc">A character sheet of the person in a reference picture, with LCM.</span>
+                  <span class="wf-desc">A character sheet of the person in a reference picture.</span>
                 </span>
               </a>
             </article>
             <div class="wf-info wf-s-info">
               <h4 class="wf-info-title">Stock nodes</h4>
-              <p class="wf-info-text">Only nodes that ship with ComfyUI, and the official MiniMax H3 Image model files listed below.</p>
+              <p class="wf-info-text">Only nodes that ship with ComfyUI. Model files below.</p>
             </div>
             <h3 class="wf-head wf-head--pixl">PixlStash nodes (loads models through PixlStash)</h3>
             <article class="wf-card wf-p1">
@@ -726,7 +744,7 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Text to image</span>
-                  <span class="wf-desc">LCM with the blank picture, through PixlStash's loader nodes.</span>
+                  <span class="wf-desc">LCM with the blank picture, through PixlStash's loaders.</span>
                 </span>
               </a>
             </article>
@@ -750,13 +768,16 @@
                 </span>
                 <span class="wf-body">
                   <span class="wf-label">Sheet from reference</span>
-                  <span class="wf-desc">A character sheet drawn from a reference picture, with LCM.</span>
+                  <span class="wf-desc">A character sheet drawn from a reference picture.</span>
                 </span>
               </a>
             </article>
-            <div class="wf-info wf-p-info">
-              <h4 class="wf-info-title">PixlStash nodes</h4>
-              <p class="wf-info-text">PixlStash's own loader nodes, which come with the <a href="comfyui.html">PixlStash desktop app</a>.</p>
+            <div class="wf-info wf-info--pic wf-p-info">
+              <span class="wf-pic"><img src="assets/minimax-h3-image/cards/model-shelf.jpg" width="640" height="480" loading="lazy" alt="The PixlStash model shelf" /></span>
+              <div class="wf-info-body">
+                <h4 class="wf-info-title">PixlStash nodes</h4>
+                <p class="wf-info-text">Loads models from the PixlStash shelf; comes with the <a href="comfyui.html">desktop app</a>.</p>
+              </div>
             </div>
           </div>
           <div class="wf-models">
