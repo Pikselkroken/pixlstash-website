@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniMax H3 Image without the crunch | PixlStash</title>
+    <meta
+      name="description"
+      content="Two stock ComfyUI changes take the crunch out of MiniMax H3 Image, and the prompt takes out most of the rest. The tests, the figures and the standalone workflow."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tiny5&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        if (localStorage.getItem("pixlstash-theme") === "light")
+          document.documentElement.setAttribute("data-theme", "light");
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="pixlstash.css" />
+    <style>
+      /* Long-form report: the site's shell width, text held to a readable
+         measure, figures and tables given the full width. */
+      .report {
+        max-width: 1100px;
+        margin: 0 auto;
+        font-size: 1.02rem;
+        line-height: 1.65;
+      }
+
+      .report h2 {
+        font-size: 1.6rem;
+        margin: 48px 0 14px;
+        scroll-margin-top: 24px;
+      }
+
+      .report p,
+      .report li {
+        color: var(--text);
+      }
+
+      .report-lede {
+        font-size: 1.15rem;
+      }
+
+      .report a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      /* The primary button keeps the site's white-on-amber label. .report a
+         would otherwise turn it amber, so this rule restores it. */
+      .report .download-btn,
+      .report .download-btn:hover {
+        color: var(--on-accent);
+        text-decoration: none;
+      }
+
+      .report code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+      }
+
+      /* Figures: natural aspect ratio at every width. The image keeps its own
+         height (height:auto) and only shrinks, never stretches or crops. */
+      .report figure {
+        margin: 32px 0;
+        break-inside: avoid;
+      }
+
+      .report .fig-link {
+        display: block;
+        cursor: zoom-in;
+      }
+
+      .report figure img {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        background: var(--panel);
+      }
+
+      .report figcaption {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+
+      .report-pdf {
+        margin: 0 0 8px;
+      }
+
+      /* Tables: a card with a clear header band, row rules, zebra rows,
+         numbers right-aligned in tabular figures. Scrolls inside its own box
+         on a phone rather than squeezing the columns. */
+      .report .table-wrap {
+        overflow-x: auto;
+        margin: 24px auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--panel);
+        box-shadow: 0 2px 10px var(--shadow);
+      }
+
+      .report table {
+        width: 100%;
+        min-width: 28rem;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .report th,
+      .report td {
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      .report thead th {
+        background: var(--panel-strong);
+        color: var(--text);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .report tbody tr:nth-child(even) td {
+        background: color-mix(in srgb, var(--panel-strong) 45%, transparent);
+      }
+
+      .report tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .report .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .report table caption {
+        caption-side: top;
+      }
+
+      .workflows {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--panel);
+        padding: 4px 20px 20px;
+        margin: 8px 0 0;
+      }
+
+      .workflows h2 {
+        margin: 14px 0 6px;
+        font-size: 1.3rem;
+      }
+
+      /* One shared grid, so both groups use the same row heights. Desktop:
+         two groups side by side, each a 2 x 2 grid (three cards and one
+         information box). The divider sits in the middle of the 16px gap. */
+      .workflows-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 8px;
+      }
+
+      .workflows-grid::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc(50% - 0.5px);
+        width: 1px;
+        background: var(--border);
+      }
+
+      .workflows .wf-head {
+        margin: 0;
+        font-size: 1rem;
+        align-self: end;
+        grid-row: 1;
+      }
+
+      .wf-head--stock { grid-column: 1 / 3; }
+      .wf-head--pixl { grid-column: 3 / 5; }
+
+      .wf-s1 { grid-column: 1; grid-row: 2; }
+      .wf-s2 { grid-column: 2; grid-row: 2; }
+      .wf-s3 { grid-column: 1; grid-row: 3; }
+      .wf-s-info { grid-column: 2; grid-row: 3; }
+      .wf-p1 { grid-column: 3; grid-row: 2; }
+      .wf-p2 { grid-column: 4; grid-row: 2; }
+      .wf-p3 { grid-column: 3; grid-row: 3; }
+      .wf-p-info { grid-column: 4; grid-row: 3; }
+
+      .wf-card {
+        display: flex;
+        min-width: 0;
+      }
+
+      .report .wf-card-link {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        background: var(--panel-strong);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 16px var(--shadow);
+        overflow: hidden;
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .report .wf-card-link:hover .wf-label {
+        color: var(--accent);
+      }
+
+      .report .wf-card-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Every card picture is cropped to one 4:3 box, so rows line up. */
+      .wf-pic {
+        position: relative;
+        display: block;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+      }
+
+      .wf-pic img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+      }
+
+      .wf-body {
+        display: block;
+        flex: 1;
+        padding: 12px 14px 14px;
+      }
+
+      .wf-badges {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        display: flex;
+        align-items: center;
+      }
+
+      .wf-badge {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid var(--panel);
+        box-shadow: 0 2px 8px var(--shadow);
+        font-family: var(--sans);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        color: var(--text);
+        background: var(--panel-strong);
+      }
+
+      .wf-badge img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+      }
+
+      /* The PixlStash icon sits in front; the ComfyUI badge peeks out behind. */
+      .wf-badge--pixlstash {
+        background: var(--panel);
+        margin-left: -10px;
+        z-index: 1;
+      }
+
+      .wf-label {
+        display: block;
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      .wf-desc {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      /* Information box: the card's outer size and surface, no picture. */
+      .wf-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 16px 14px;
+        background: var(--panel-strong);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+
+      .workflows .wf-info-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .wf-info-text {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      /* The PixlStash box carries a picture like a card. */
+      .wf-info--pic {
+        padding: 0;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      .wf-info--pic .wf-pic img {
+        object-position: left top;
+      }
+
+      .wf-info-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px 14px;
+      }
+
+      .wf-info-text a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .wf-models {
+        margin-top: 20px;
+        border-top: 1px solid var(--divider);
+        padding-top: 14px;
+      }
+
+      .wf-models-title {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .wf-models-list {
+        margin: 0;
+        font-size: 0.92rem;
+      }
+
+      .wf-models-list > div {
+        display: grid;
+        grid-template-columns: 9rem 14rem minmax(0, 1fr);
+        gap: 4px 16px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--divider);
+      }
+
+      .wf-models-list > div:last-child {
+        border-bottom: none;
+      }
+
+      .wf-models-list dt {
+        color: var(--muted);
+      }
+
+      .wf-models-list dd {
+        margin: 0;
+        word-break: break-all;
+      }
+
+      /* Tablet: the two groups stack, each still a 2 x 2 grid. */
+      @media (max-width: 1000px) {
+        .workflows-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .workflows-grid::before {
+          display: none;
+        }
+
+        .wf-head--stock,
+        .wf-head--pixl,
+        .wf-models {
+          grid-column: 1 / -1;
+        }
+
+        .workflows .wf-head--stock { grid-row: 1; }
+        .wf-s1 { grid-column: 1; grid-row: 2; }
+        .wf-s2 { grid-column: 2; grid-row: 2; }
+        .wf-s3 { grid-column: 1; grid-row: 3; }
+        .wf-s-info { grid-column: 2; grid-row: 3; }
+
+        .workflows .wf-head--pixl { grid-row: 4; }
+        .wf-p1 { grid-column: 1; grid-row: 5; }
+        .wf-p2 { grid-column: 2; grid-row: 5; }
+        .wf-p3 { grid-column: 1; grid-row: 6; }
+        .wf-p-info { grid-column: 2; grid-row: 6; }
+
+        .wf-models { grid-row: 7; }
+      }
+
+      /* Phone: one column, in reading order. */
+      @media (max-width: 680px) {
+        .workflows .workflows-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .workflows .workflows-grid > * {
+          grid-column: 1 / -1;
+          grid-row: auto;
+        }
+
+        .wf-models-list > div {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 2px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .report h2 {
+          font-size: 1.35rem;
+        }
+      }
+
+      .print-only {
+        display: none;
+      }
+
+      @media print {
+        @page {
+          size: A4;
+          margin: 18mm 16mm;
+        }
+
+        /* Plain paper: white ground, dark text, no bands, no chrome. */
+        :root {
+          color-scheme: light;
+        }
+
+        html,
+        body {
+          background: #fff !important;
+          color: #222 !important;
+        }
+
+        #nav-placeholder,
+        .nav,
+        .page-footer,
+        .report-pdf,
+        .download-btn,
+        .web-only {
+          display: none !important;
+        }
+
+        .workflows {
+          background: none !important;
+          border: none;
+          padding: 0;
+          break-inside: avoid;
+        }
+
+        .workflows .workflows-grid {
+          display: block;
+        }
+
+        .workflows-grid::before,
+        .wf-info,
+        .wf-pic,
+        .wf-badges {
+          display: none !important;
+        }
+
+        .workflows a {
+          color: #222;
+        }
+
+        .workflows .wf-head {
+          margin: 14px 0 4px;
+          font-size: 11pt;
+          color: #222;
+        }
+
+        .workflows .wf-card {
+          display: block;
+          margin: 0 0 8px;
+        }
+
+        .report .wf-card-link {
+          display: block;
+          background: none;
+          border: none;
+          box-shadow: none;
+          border-radius: 0;
+          color: #222;
+        }
+
+        .workflows .wf-body {
+          padding: 0;
+        }
+
+        .wf-label {
+          display: block;
+          font-weight: 600;
+          white-space: normal;
+        }
+
+        .wf-desc {
+          display: block;
+          margin: 0 0 2px;
+          font-size: 9.5pt;
+          color: #444;
+        }
+
+        .workflows .wf-card-link::after {
+          font-size: 0.8em;
+          color: #444;
+        }
+
+        .wf-models {
+          margin-top: 8px;
+          border-top: none;
+          padding-top: 0;
+        }
+
+        .wf-models-title {
+          color: #444;
+          font-size: 9.5pt;
+          margin: 0 0 4px;
+        }
+
+        .wf-models-list {
+          font-size: 9.5pt;
+        }
+
+        .wf-models-list > div {
+          display: block;
+          padding: 0;
+          border: none;
+          margin-bottom: 3px;
+        }
+
+        .wf-models-list dt,
+        .wf-models-list dd {
+          display: inline;
+          margin: 0;
+        }
+
+        .wf-models-list dd + dd::before {
+          content: " ";
+        }
+
+        .print-only {
+          display: block;
+          font-size: 8.5pt;
+          color: #666;
+          margin: 4px 0 18px;
+        }
+
+        .shell {
+          padding: 0;
+          max-width: none;
+        }
+
+        .report,
+        .report p,
+        .report li,
+        .report td,
+        .report th,
+        .report h2,
+        .report figcaption,
+        .page-hero h1 {
+          color: #222 !important;
+          background: none !important;
+        }
+
+        .report {
+          max-width: none;
+          font-size: 10.5pt;
+          line-height: 1.5;
+        }
+
+        .report figure {
+          margin: 14px auto;
+        }
+
+        .report figure img {
+          width: auto;
+          max-width: 100%;
+          max-height: 205mm;
+          margin: 0 auto;
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
+          background: none;
+        }
+
+        .report figure img,
+        .report table,
+        .report .table-wrap {
+          border-color: #bbb;
+        }
+
+        .report .table-wrap {
+          box-shadow: none;
+          background: none;
+        }
+
+        .report thead th {
+          background: none;
+        }
+
+        .report tbody tr:nth-child(even) td {
+          background: none;
+        }
+
+        .report h2 {
+          break-after: avoid;
+          margin-top: 24px;
+        }
+
+        .report h2 + p,
+        .report h2 + .table-wrap {
+          break-before: avoid;
+        }
+
+        .report table,
+        .report tr {
+          break-inside: avoid;
+        }
+
+        .report a {
+          color: inherit;
+          text-decoration: underline;
+        }
+
+        .report a[href^="http"]::after {
+          content: " (" attr(href) ")";
+          font-size: 0.8em;
+          color: #444;
+          word-break: break-all;
+        }
+
+        /* Figure links wrap images: the image is the content, so no address
+           is printed under it. */
+        .report .fig-link::after {
+          content: none;
+        }
+
+        .report figcaption {
+          break-before: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div id="nav-placeholder"></div>
+      <script src="nav.js"></script>
+
+      <main class="report">
+        <header class="page-hero">
+          <h1>MiniMax H3 Image without the crunch</h1>
+          <p class="report-pdf">
+            <a class="download-btn" href="minimax-h3-image.pdf">Download the PDF</a>
+          </p>
+          <p class="print-only">PixlStash · pixlstash.dev/minimax-h3-image.html</p>
+        </header>
+
+        <section class="workflows" id="workflows" aria-labelledby="workflows-heading">
+          <h2 id="workflows-heading">Workflows</h2>
+          <div class="workflows-grid">
+            <h3 class="wf-head wf-head--stock">Standard ComfyUI (stock nodes only)</h3>
+            <article class="wf-card wf-s1">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-t2i.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/t2i-stock.jpg" width="640" height="853" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Text to image</span>
+                  <span class="wf-desc">SamplerLCM 1.10 to 0.90, 6 steps, a blank 32 x 32 picture for step 1.</span>
+                </span>
+              </a>
+            </article>
+            <article class="wf-card wf-s2">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-keep-a-seed.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/keep-a-seed.jpg" width="640" height="640" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Keep a seed</span>
+                  <span class="wf-desc">Euler for 1 step, then LCM for 5: keeps a seed's person.</span>
+                </span>
+              </a>
+            </article>
+            <article class="wf-card wf-s3">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-from-reference.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/sheet-from-reference-stock.jpg" width="640" height="384" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Sheet from reference</span>
+                  <span class="wf-desc">A character sheet of the person in a reference picture.</span>
+                </span>
+              </a>
+            </article>
+            <div class="wf-info wf-s-info">
+              <h4 class="wf-info-title">Stock nodes</h4>
+              <p class="wf-info-text">Only nodes that ship with ComfyUI. Model files below.</p>
+            </div>
+            <h3 class="wf-head wf-head--pixl">PixlStash nodes (loads models through PixlStash)</h3>
+            <article class="wf-card wf-p1">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-t2i-pixlstash.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/t2i-pixlstash.jpg" width="640" height="853" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span><span class="wf-badge wf-badge--pixlstash"><img src="assets/logo.png" width="491" height="503" alt="" /></span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Text to image</span>
+                  <span class="wf-desc">LCM with the blank picture for step 1, through PixlStash's loaders.</span>
+                </span>
+              </a>
+            </article>
+            <article class="wf-card wf-p2">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-pixlstash.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/sheet-pixlstash.jpg" width="640" height="384" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span><span class="wf-badge wf-badge--pixlstash"><img src="assets/logo.png" width="491" height="503" alt="" /></span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Character sheet</span>
+                  <span class="wf-desc">LCM character sheet with PixlStash's sheet prompt.</span>
+                </span>
+              </a>
+            </article>
+            <article class="wf-card wf-p3">
+              <a class="wf-card-link" href="https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-from-reference-pixlstash.json" download>
+                <span class="wf-pic">
+                  <img src="assets/minimax-h3-image/cards/sheet-from-reference-pixlstash.jpg" width="640" height="384" loading="lazy" alt="" />
+                  <span class="wf-badges"><span class="wf-badge wf-badge--comfy">ComfyUI</span><span class="wf-badge wf-badge--pixlstash"><img src="assets/logo.png" width="491" height="503" alt="" /></span></span>
+                </span>
+                <span class="wf-body">
+                  <span class="wf-label">Sheet from reference</span>
+                  <span class="wf-desc">A character sheet drawn from a reference picture.</span>
+                </span>
+              </a>
+            </article>
+            <div class="wf-info wf-info--pic wf-p-info">
+              <span class="wf-pic"><img src="assets/minimax-h3-image/cards/model-shelf.jpg" width="640" height="480" loading="lazy" alt="The PixlStash model shelf" /></span>
+              <div class="wf-info-body">
+                <h4 class="wf-info-title">PixlStash nodes</h4>
+                <p class="wf-info-text">Loads models from the PixlStash shelf; comes with the <a href="comfyui.html">desktop app</a>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="wf-models">
+            <p class="wf-models-title">Model files, the official ones as in ComfyUI's own template:</p>
+            <dl class="wf-models-list">
+              <div>
+                <dt>Diffusion model</dt>
+                <dd><code>models/diffusion_models</code></dd>
+                <dd><a href="https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors">minimax_h3_image_pruned_int8_convrot.safetensors</a></dd>
+              </div>
+              <div>
+                <dt>Text encoder</dt>
+                <dd><code>models/text_encoders</code></dd>
+                <dd><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors">qwen3vl_32b_minimax_h3_int8_convrot.safetensors</a></dd>
+              </div>
+              <div>
+                <dt>VAE</dt>
+                <dd><code>models/vae</code></dd>
+                <dd><a href="https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors">minimax_h3_image_vae_fp16.safetensors</a></dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <p class="report-lede">
+          ComfyUI's official MiniMax H3 Image template gives crunchy, over-sharpened skin. Two stock-node changes fix it, and the prompt fixes the rest.
+        </p>
+        <p>
+          These tests were made to set good defaults for
+          PixlStash's MiniMax H3 Image
+          workflows. A workflow PixlStash ships has to give a good picture to
+          anyone who presses Run, so it starts from sensible plug-and-play
+          defaults, with the choices that matter most as options in the Run
+          popup. A custom workflow, in ComfyUI or in PixlStash, which runs any
+          ComfyUI workflow, can make other trade-offs for the job at hand. That
+          is why the tests are shared: they show what each choice does, so you
+          can make your own. They build on community work, credited at the end.
+        </p>
+
+        <h2>The fix</h2>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="fix-caption">
+          <table>
+            <caption id="fix-caption" class="sr-only">The changes that fix the crunch, their effect and where to use them</caption>
+            <thead>
+              <tr>
+                <th scope="col">Change</th>
+                <th scope="col">Effect</th>
+                <th scope="col">Use for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SamplerLCM: <code>s_noise</code> 1.10 to 0.90, simple scheduler, 6 steps, CFG 1</td>
+                <td>Most of the crunch gone</td>
+                <td>Everything</td>
+              </tr>
+              <tr>
+                <td>A blank 32 x 32 <code>EmptyImage</code> into <code>image_1</code>, no VAE, for step 1 only: <code>ConditioningSetTimestepRange</code> 0 to 0.1, a text-only encoder for the rest</td>
+                <td>Less crunch, and most of the variety kept</td>
+                <td>Text-to-image only</td>
+              </tr>
+              <tr>
+                <td>Describe camera, light and skin; drop "photorealistic"</td>
+                <td>Less airbrushed skin</td>
+                <td>Every prompt</td>
+              </tr>
+              <tr>
+                <td>Describe grid panels instead of numbering them</td>
+                <td>No digits drawn into the photos</td>
+                <td>Sheets and grids</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          No help: a 16 MP canvas instead of 4 MP, or an nvfp4 text encoder
+          instead of int8. dpmpp_2m and res_multistep break the picture.
+        </p>
+
+        <h2>Method</h2>
+        <p>
+          Each comparison changes one thing: same prompt, seed and canvas, with
+          faces compared as 1:1 crops. A rebuilt workflow was first checked to
+          reproduce the original pixel for pixel. Likeness to a reference
+          picture is scored with InsightFace. Most tests are 5280 x 3168
+          character sheets of three people: a young woman with freckles, a
+          bearded man in his forties and a woman with a black bob. Model files:
+          the official int8 ones.
+        </p>
+
+        <h2>The official template</h2>
+        <p>
+          Euler, simple scheduler, 6 steps: etched skin, blotchy freckles, wiry
+          hair and oversaturated colour. Neither a 16 MP canvas nor the smaller
+          nvfp4 text encoder (15.7 GB against 27 GB) changed that. The sampler
+          was the cause.
+        </p>
+        <p>
+          Swapping euler for another stock sampler does not help: dpmpp_2m and
+          res_multistep break the picture completely.
+        </p>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig11_broken_samplers.jpg">
+            <img
+              src="assets/minimax-h3-image/fig11_broken_samplers.jpg"
+              width="1600"
+              height="840"
+              loading="lazy"
+              alt="Faces from the same text-only prompt and seed under several samplers, two of them broken"
+            />
+          </a>
+          <figcaption>
+            <em>Same text-only prompt and seed, faces at 1:1. dpmpp_2m and res_multistep break the picture; LCM is clean.</em>
+          </figcaption>
+        </figure>
+
+        <h2>LCM and the blank picture</h2>
+        <p>
+          <strong>SamplerLCM removes most of the crunch.</strong> The settings come from
+          u/LilBrownBebeShoes's
+          <a href="https://www.reddit.com/r/StableDiffusion/comments/1xt9ocv/minimax_h3_image_20mp_workflow/">20MP workflow</a>,
+          which credits Kijai's testing. Less noise than 1.10 to 0.90 turned
+          skin blotchy; more was no better.
+        </p>
+        <p>
+<strong>The blank picture removes more of it.</strong> It comes from Kijai's "text with empty image" mode in
+          <a href="https://github.com/kijai/ComfyUI-KJNodes">ComfyUI-KJNodes</a>. Only text-to-image needs it: edits and reference sheets already have a picture. Kijai's mode shows it for the first 2 of 6 steps, which gives nearly the same picture as all 6. On the sheets, step 1 alone already gave the same look, with slightly less glossy skin.
+        </p>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig1_official_vs_fixed.jpg">
+            <img
+              src="assets/minimax-h3-image/fig1_official_vs_fixed.jpg"
+              width="1600"
+              height="1368"
+              loading="lazy"
+              alt="The official template against LCM plus the blank picture, same prompt and seed"
+            />
+          </a>
+          <figcaption>
+            <em>Same prompt and seed. Left: official template. Right: LCM plus the blank picture. Below: a face at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <p>
+          On the sheets, with the blank picture the unnamed sweater went from saturated teal to
+          muted navy, and skin looked warmer and more natural, for all three
+          people. It also settles the composition, so every sampler draws much
+          the same picture. Its size hardly matters: 32 x 32, 512 x 512 and 1024
+          x 1024 gave nearly identical pictures.
+        </p>
+
+        <p>
+          <strong>A caveat.</strong> LCM and the blank picture also steer the
+          model toward a safer, more standard look, and the blank picture does
+          so strongly: measured in the next section.
+        </p>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig4_blank_picture.jpg">
+            <img
+              src="assets/minimax-h3-image/fig4_blank_picture.jpg"
+              width="1200"
+              height="1932"
+              loading="lazy"
+              alt="LCM with and without the blank picture, three people"
+            />
+          </a>
+          <figcaption>
+            <em>LCM only (left) against LCM plus the blank picture (right), faces at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <figure class="web-only">
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig8_blank_sizes.jpg">
+            <img
+              src="assets/minimax-h3-image/fig8_blank_sizes.jpg"
+              width="1560"
+              height="1600"
+              loading="lazy"
+              alt="The blank picture at three sizes, body-photo faces at 1:1"
+            />
+          </a>
+          <figcaption>
+            <em>The blank picture at 32 x 32, 512 x 512 and 1024 x 1024: nearly identical. Body-photo faces at 1:1, same seed.</em>
+          </figcaption>
+        </figure>
+
+        <figure class="web-only">
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig10_blank_steps.jpg">
+            <img
+              src="assets/minimax-h3-image/fig10_blank_steps.jpg"
+              width="1500"
+              height="940"
+              loading="lazy"
+              alt="The blank picture over 1, 2 and 6 steps, beside LCM only and euler 1 with the blank picture then LCM 5"
+            />
+          </a>
+          <figcaption>
+            <em>The blank picture for step 1, steps 1 and 2, and all 6 steps, beside LCM only and euler 1 with the blank picture then LCM 5. Body-photo faces at 1:1, same seed.</em>
+          </figcaption>
+        </figure>
+
+        <h2 id="narrowing">The blank picture narrows the output</h2>
+        <p>
+          The blank picture has a price: kept for all six steps, it pulls every
+          seed toward the same person. To measure that rather than judge it by
+          eye, the test was written down before any picture was made. Three
+          lightly steered prompts ("a red-haired European woman in her mid
+          twenties", "a Southeast Asian man in his fifties", "a Black woman in
+          her forties", each "head and shoulders, looking at the camera"), 12
+          seeds each, the same seeds for every setup, 1024 x 1024. InsightFace
+          identity similarity between the faces of different seeds measures how
+          alike the seeds come out: higher is narrower.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="narrowing-caption">
+          <table>
+            <caption id="narrowing-caption" class="sr-only">Similarity between seeds by setup, against LCM only</caption>
+            <thead>
+              <tr>
+                <th scope="col">Setup</th>
+                <th scope="col" class="num">Similarity across seeds</th>
+                <th scope="col" class="num">Against LCM only (95% interval)</th>
+                <th scope="col" class="num">Variety given back</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>euler (official)</td><td class="num">0.14</td><td class="num">-0.07 (-0.11 to -0.04)</td><td class="num"></td></tr>
+              <tr><td>LCM only</td><td class="num">0.21</td><td class="num">reference</td><td class="num"></td></tr>
+              <tr><td>LCM + blank picture, all 6 steps</td><td class="num"><strong>0.54</strong></td><td class="num"><strong>+0.33 (+0.30 to +0.36)</strong></td><td class="num">none</td></tr>
+              <tr><td>LCM + grey blank picture</td><td class="num">0.52</td><td class="num">+0.32 (+0.28 to +0.35)</td><td class="num">4%</td></tr>
+              <tr><td>LCM + blank picture, step 1 only</td><td class="num">0.31</td><td class="num">+0.10 (+0.06 to +0.14)</td><td class="num"><strong>69%</strong></td></tr>
+              <tr><td>LCM + blank picture, steps 3 to 6</td><td class="num">0.46</td><td class="num">+0.25 (+0.21 to +0.28)</td><td class="num">24%</td></tr>
+              <tr><td>LCM + grey picture with faint noise</td><td class="num">0.53</td><td class="num">+0.33 (+0.29 to +0.36)</td><td class="num">1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          With the blank picture, different seeds draw faces about as alike as
+          face recognition expects of two photos of one person: the same frontal
+          pose, centre parting and symmetrical face. The three different people
+          also drift toward one face. A grey picture does the same, so the
+          colour of the picture does not matter, and faint noise in it changes
+          nothing. LCM alone narrows a little against euler, far less.
+        </p>
+        <p>
+          <strong>The blank picture for step 1 only gives back about 70% of the
+          lost variety.</strong> Moving it to steps 3 to 6 gives back only a
+          quarter: with six steps, the face is still being settled after the
+          first two.
+        </p>
+        <p>
+          <strong>And it keeps the skin clean.</strong> At the size people
+          render (3552 x 4736), the blank picture for step 1 only gives the same
+          clean skin as all six steps, where euler etches it. This is the
+          setting PixlStash's text-to-image and sheet workflows use, and the
+          downloadable workflows above, with the blank picture at 32 x 32,
+          since its size makes no difference.
+        </p>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig16_4k_step1.jpg">
+            <img
+              src="assets/minimax-h3-image/fig16_4k_step1.jpg"
+              width="1956"
+              height="2006"
+              loading="lazy"
+              alt="Face crops at 1:1 from 3552 x 4736 pictures: euler, the blank picture for all six steps and for step 1 only"
+            />
+          </a>
+          <figcaption>
+            <em>1:1 crops between the eyes at 3552 x 4736, seed 3001, the three prompts. Left to right: euler, the blank picture for all 6 steps, for step 1 only.</em>
+          </figcaption>
+        </figure>
+        <p>
+          Colour: on these portraits the blank picture did not lower saturation
+          (mean CIELAB chroma 13.4 without it, 14.4 with it), so the calmer
+          colour seen on the sheets above is not confirmed as a general effect.
+        </p>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig13_narrowing_faces.jpg">
+            <img
+              src="assets/minimax-h3-image/fig13_narrowing_faces.jpg"
+              width="1920"
+              height="1422"
+              loading="lazy"
+              alt="Twelve seeds per prompt under euler, LCM only and LCM with the blank picture"
+            />
+          </a>
+          <figcaption>
+            <em>The 12 seeds of each prompt. In each block, top to bottom: euler, LCM only, LCM + blank picture.</em>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig12_narrowing_pca.png">
+            <img
+              src="assets/minimax-h3-image/fig12_narrowing_pca.png"
+              width="2160"
+              height="784"
+              loading="lazy"
+              alt="InsightFace identity of each face, projected per prompt: the blank picture's faces form a tight cloud of their own"
+            />
+          </a>
+          <figcaption>
+            <em>Each face's InsightFace identity, PCA per prompt. The blank picture's faces form a small, tight cloud of their own; ellipses span one standard deviation.</em>
+          </figcaption>
+        </figure>
+
+        <h3>Barry the Gnome</h3>
+        <p>
+          A fourth test subject anyone can reuse: "A photo of Barry the Gnome, a
+          ceramic garden gnome with blue eyes, a red hat and a full white beard,
+          with a belly and a belt, head and shoulders, looking at the camera."
+          InsightFace does poorly on faces that are not realistic, so Barry is
+          compared with whole-picture CLIP similarity instead (higher is
+          narrower). Same 12 seeds.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="barry-caption">
+          <table>
+            <caption id="barry-caption" class="sr-only">Barry the Gnome: CLIP similarity between seeds by setup, against LCM only</caption>
+            <thead>
+              <tr>
+                <th scope="col">Setup</th>
+                <th scope="col" class="num">CLIP similarity across seeds</th>
+                <th scope="col" class="num">Against LCM only (95% interval)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>euler (official)</td><td class="num">0.877</td><td class="num">-0.004 (-0.039 to +0.031)</td></tr>
+              <tr><td>LCM only</td><td class="num">0.881</td><td class="num">reference</td></tr>
+              <tr><td>LCM + blank picture, all 6 steps</td><td class="num"><strong>0.923</strong></td><td class="num"><strong>+0.042 (+0.013 to +0.070)</strong></td></tr>
+              <tr><td>LCM + blank picture, step 1 only</td><td class="num">0.909</td><td class="num">+0.029 (-0.005 to +0.061)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Barry narrows too. With the blank picture on all six steps every seed
+          draws the same close-up on a dark background; without it, and with it
+          for step 1 only, the framing and the setting vary again. In CLIP's
+          units the step 1 setting gives back about a third of the narrowing,
+          and its interval no longer excludes LCM only.
+        </p>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig14_barry.jpg">
+            <img
+              src="assets/minimax-h3-image/fig14_barry.jpg"
+              width="1920"
+              height="624"
+              loading="lazy"
+              alt="Barry the Gnome, 12 seeds under euler, LCM only, the blank picture for all six steps and for step 1 only"
+            />
+          </a>
+          <figcaption>
+            <em>Barry the Gnome, 12 seeds. Top to bottom: euler, LCM only, blank picture for all 6 steps, blank picture for step 1 only.</em>
+          </figcaption>
+        </figure>
+
+        <h2>Keeping a seed's person</h2>
+        <p>
+          The fix changes the person a seed draws. To keep that person, run
+          euler for 1 step and LCM for the other 5 (<code>SplitSigmas</code> at
+          1, <code>DisableNoise</code> on the LCM part). The person stays and the
+          worst crunch goes, but the picture is not fully rescued: a salvage, not
+          the fix. More euler steps keep more crunch.
+        </p>
+
+        <figure class="web-only">
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig2_samplers.jpg">
+            <img
+              src="assets/minimax-h3-image/fig2_samplers.jpg"
+              width="1600"
+              height="880"
+              loading="lazy"
+              alt="One face per sampler from the same text-only prompt and seed"
+            />
+          </a>
+          <figcaption>
+            <em>One face at 1:1 per sampler, same text-only prompt and seed. dpmpp_2m and res_multistep break the picture; more euler steps keep more crunch.</em>
+          </figcaption>
+        </figure>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig3_euler_vs_split.jpg">
+            <img
+              src="assets/minimax-h3-image/fig3_euler_vs_split.jpg"
+              width="1280"
+              height="1324"
+              loading="lazy"
+              alt="Euler 6 steps against euler 1 plus LCM 5"
+            />
+          </a>
+          <figcaption>
+            <em>Euler 6 (left) against euler 1 + LCM 5 (right), faces at 1:1.</em>
+          </figcaption>
+        </figure>
+
+        <h2>Sheets from a reference picture</h2>
+        <p>
+          When a sheet is drawn from a reference picture, the person comes from
+          that picture, so likeness matters most. Two people, two reference
+          pictures each, four seeds, LCM against euler. Likeness is InsightFace
+          similarity to the reference face, averaged over the six photos of a
+          sheet and the four seeds; higher is closer.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="likeness-caption">
+          <table>
+            <caption id="likeness-caption" class="sr-only">Likeness to the reference face by sampler, for two people with two reference pictures each</caption>
+            <thead>
+              <tr>
+                <th scope="col">Reference</th>
+                <th scope="col" class="num">LCM</th>
+                <th scope="col" class="num">euler (official)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Woman, reference 1</td><td class="num"><strong>0.64</strong></td><td class="num">0.60</td></tr>
+              <tr><td>Woman, reference 2</td><td class="num"><strong>0.69</strong></td><td class="num">0.66</td></tr>
+              <tr><td>Man, reference 1</td><td class="num"><strong>0.67</strong></td><td class="num">0.63</td></tr>
+              <tr><td>Man, reference 2</td><td class="num"><strong>0.73</strong></td><td class="num">0.70</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>LCM keeps the person better than euler every time:</strong>
+          it scores higher in all 16 pairs of the same reference and seed. The
+          reference picture matters more than the sampler, though: each
+          person's second reference scores clearly higher than the first, with
+          either sampler.
+        </p>
+        <p>
+          <strong>Euler keeps a little more skin detail, though.</strong> With a
+          picture to work from it does not bring the crunch back, and freckles
+          and pores come out a touch crisper, at that small cost in likeness.
+          So PixlStash offers the choice wherever a picture goes in (sheets from
+          a reference, edit and inpaint): LCM by default, Euler one click away.
+        </p>
+
+        <p>
+          <strong>One good picture is enough.</strong> MiniMax H3 Image takes up to a hundred pictures, so the obvious next step is to feed a sheet's own photos back in for the next one. Tested fairly: from one first sheet, one of its photos, its four passport photos or all six, the same prompt and four new seeds each, with a new location, light, clothes and expressions none of the photos show. The number of photos hardly mattered. Every version drew genuinely new photos of the same person, not the inputs on a new background; against the first sheet's six faces the median likeness was 0.44 to 0.48 for the woman and 0.50 to 0.51 for the man whichever was used, and the three clouds of faces sit on top of each other. What moves the faces away from the first sheet is the new scene and the harder expressions, not the references. Six photos bought one small thing, a better worst face for the woman (0.32 against 0.25), and in a blind side-by-side the versions could not be told apart. The advice: one good, near-frontal picture is enough, and PixlStash's sheets take one.
+        </p>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig17_one_or_more.jpg">
+            <img
+              src="assets/minimax-h3-image/fig17_one_or_more.jpg"
+              width="2400"
+              height="1002"
+              loading="lazy"
+              alt="New sheets drawn from one, four and six photos of the first sheet, for both people"
+            />
+          </a>
+          <figcaption>
+            <em>A new location, light, clothes and expressions, seed 5202. Left to right: from one photo of the first sheet, from its four passport photos, from all six of its photos.</em>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig18_reference_clusters.png">
+            <img
+              src="assets/minimax-h3-image/fig18_reference_clusters.png"
+              width="2080"
+              height="1056"
+              loading="lazy"
+              alt="Cluster plots of face identity: new sheets from 1, 4 and 6 photos overlap, all a similar distance from the first sheet's faces"
+            />
+          </a>
+          <figcaption>
+            <em>Every face's InsightFace identity, PCA per person: the first sheet's six faces (grey rings), the original photo (star), and the new sheets from 1, 4 or 6 of its photos, four seeds each. The three clouds overlap.</em>
+          </figcaption>
+        </figure>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig15_reference.jpg">
+            <img
+              src="assets/minimax-h3-image/fig15_reference.jpg"
+              width="1462"
+              height="1684"
+              loading="lazy"
+              alt="Four reference pictures, each beside the first photo of a sheet drawn from it with LCM and with euler"
+            />
+          </a>
+          <figcaption>
+            <em>Each reference, then the first photo of a sheet drawn from it with LCM and with euler, seed 3141. The number is that sheet's likeness.</em>
+          </figcaption>
+        </figure>
+
+        <h2 id="the-prompt">The prompt</h2>
+        <ul>
+          <li>
+            <strong>Numbered panels get drawn.</strong> "(1)" to "(6)" in a sheet
+            prompt appeared as digits in the photos; listing the views without
+            numbers stopped it.
+            <figure class="web-only">
+              <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig9_panel_numbers.jpg">
+                <img
+                  src="assets/minimax-h3-image/fig9_panel_numbers.jpg"
+                  width="1320"
+                  height="1672"
+                  loading="lazy"
+                  alt="Numbered sheet prompt against the same prompt without numbers, same seed"
+                />
+              </a>
+              <figcaption>
+                <em>Same seed: the numbered prompt drew digits into the photos (top); listing the views without numbers did not (bottom).</em>
+              </figcaption>
+            </figure>
+          </li>
+          <li>
+            <strong>Describe the photo, not its quality.</strong> "Photorealistic"
+            pulls toward a render; camera, light and skin words pull toward a
+            photo.
+          </li>
+          <li>
+            <strong>Skin.</strong> "True-to-life skin" gave airbrushed faces;
+            describing texture fixed that but aged them. The wording that kept
+            realism without the ageing:
+            <em>"real skin with its natural texture and a little shine, a few small marks, no makeup, no beauty filter, nothing airbrushed, smoothed, retouched or sharpened, a touch of sensor noise and a few flyaway hairs."</em>
+          </li>
+          <li>
+            <strong>Light words work</strong> (golden hour, street light, flash,
+            office, overcast, winter, dusk); "early camera phone" and "Polaroid"
+            barely register. "Pores" ages young faces, makeup feminises men, and
+            "softbox" draws the softbox.
+          </li>
+        </ul>
+
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig6_photo_look.jpg">
+            <img
+              src="assets/minimax-h3-image/fig6_photo_look.jpg"
+              width="1800"
+              height="940"
+              loading="lazy"
+              alt="Photo look variants C to C6, three people"
+            />
+          </a>
+          <figcaption>
+            <em>Skin wording from "true-to-life skin" (C) to the final wording (C6), three people, same seed.</em>
+          </figcaption>
+        </figure>
+
+        <figure class="web-only">
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig7_camera_light.jpg">
+            <img
+              src="assets/minimax-h3-image/fig7_camera_light.jpg"
+              width="1440"
+              height="1920"
+              loading="lazy"
+              alt="Nine camera and light combinations on the same prompt"
+            />
+          </a>
+          <figcaption>
+            <em>Nine camera and light combinations. Left to right, top to bottom: professional DSLR + studio (the softboxes show), older phone + street light, 35 mm film + golden hour, disposable camera + flash, early camera phone + office, instant photo + summer haze, mirrorless + overcast, phone + winter daylight, professional DSLR + dusk.</em>
+          </figcaption>
+        </figure>
+
+        <h2>In PixlStash and in plain ComfyUI</h2>
+        <p>
+          PixlStash v2.0.2's MiniMax H3 Image text-to-image and sheet workflows
+          use LCM, with a 32 x 32 blank picture for step 1 where there is no input picture; its
+          inpaint workflow uses LCM too. Its optional Photo
+          look adds camera, light and skin lines at run time, leaving the user's
+          prompt untouched.
+        </p>
+        <p>
+          Stock-node workflows for plain ComfyUI, using the official model files,
+          are linked at <a href="#workflows">the top of the web version</a>:
+          text-to-image with the fix, and the keep-a-seed variant.
+        </p>
+
+        <h2>Limits</h2>
+        <p>
+          One or two seeds and two or three people per comparison, mostly
+          portraits, judged by eye except likeness. Not tested: more than 6 steps, other schedulers, and LCM for edits and inpainting.
+        </p>
+
+        <h2>Credits</h2>
+        <ul>
+          <li>
+            u/LilBrownBebeShoes, for the
+            <a href="https://www.reddit.com/r/StableDiffusion/comments/1xt9ocv/minimax_h3_image_20mp_workflow/">MiniMax H3 Image 20MP workflow</a>,
+            the starting point.
+          </li>
+          <li>
+            Kijai, for the LCM settings (as credited in that post) and the
+            empty-image method in
+            <a href="https://github.com/kijai/ComfyUI-KJNodes">ComfyUI-KJNodes</a>.
+          </li>
+          <li>
+            <a href="https://dev.to/furkangozukara/new-minimax-h3-image-preset-improves-errors-in-tiny-details-significantly-2ob">Furkan Gözükara</a>,
+            <a href="https://github.com/igorls/comfyui-h3-sampler">igorls</a>,
+            <a href="https://pixelailabs.com/blog/minimax-h3-image-comfyui-realistic-photos">PixelAI Labs</a>
+            and
+            <a href="https://huggingface.co/vyrekai/minimax-h3-image-comfyui-workflows">vyrekai</a>,
+            for related write-ups and workflows.
+          </li>
+          <li>
+            MiniMax, for releasing
+            <a href="https://github.com/MiniMax-AI/MiniMax-H3-Image">MiniMax H3 Image</a>
+            as open weights.
+          </li>
+        </ul>
+
+        <div class="page-footer">
+          <p>
+            <a href="index.html">Back to PixlStash home</a>
+            &nbsp;·&nbsp;
+            <a href="introduction.html">Getting started</a>
+          </p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
