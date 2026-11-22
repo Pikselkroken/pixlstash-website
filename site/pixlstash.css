@@ -24,6 +24,7 @@
   --accent-2: #e08a2a; /* brighter amber, glow / gradient end */
   --accent-3: #2a7d3e; /* success (e.g. "Copied") */
   --on-accent: #f7f1ea; /* warm-white label on any brand fill */
+  --ink-on-accent: #1b1f24; /* dark label on the amber fill: 4.9:1, where warm-white is 3.0:1 */
   --primary: #567309; /* olive, commit / go */
   --secondary: #bb3566; /* raspberry, category */
   --tertiary: #46707a; /* teal, quiet category */
