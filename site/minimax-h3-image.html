@@ -1216,19 +1216,7 @@
         </p>
 
         <p>
-          <strong>One good picture beats several.</strong> MiniMax H3 Image takes
-          up to a hundred pictures, so the obvious next step is to feed a sheet's
-          own photos back in for the next one. Tested with a new location, light,
-          clothes and expressions none of the photos show, four seeds each: the
-          sheet's four passport photos, or all six, did not beat the one original
-          picture. For the man, whose original is a side profile, four photos did
-          better (likeness to the original 0.49 against 0.43); for the woman, whose
-          original is a near-frontal portrait, the one picture did better (0.50
-          against 0.42), and six photos sat between. Every version drew genuinely
-          new photos of the same person, not the inputs on a new background, and
-          held them together equally well. The advice: give one good, near-frontal
-          picture rather than several. PixlStash's sheets take one reference
-          picture for that reason.
+          <strong>One good picture is enough.</strong> MiniMax H3 Image takes up to a hundred pictures, so the obvious next step is to feed a sheet's own photos back in for the next one. Tested fairly: from one first sheet, one of its photos, its four passport photos or all six, the same prompt and four new seeds each, with a new location, light, clothes and expressions none of the photos show. The number of photos hardly mattered. Every version drew genuinely new photos of the same person, not the inputs on a new background; against the first sheet's six faces the median likeness was 0.44 to 0.48 for the woman and 0.50 to 0.51 for the man whichever was used, and the three clouds of faces sit on top of each other. What moves the faces away from the first sheet is the new scene and the harder expressions, not the references. Six photos bought one small thing, a better worst face for the woman (0.32 against 0.25), and in a blind side-by-side the versions could not be told apart. The advice: one good, near-frontal picture is enough, and PixlStash's sheets take one.
         </p>
         <figure>
           <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig17_one_or_more.jpg">
@@ -1237,11 +1225,25 @@
               width="2400"
               height="1002"
               loading="lazy"
-              alt="New sheets drawn from one original picture, four sheet photos and six sheet photos, for both people"
+              alt="New sheets drawn from one, four and six photos of the first sheet, for both people"
             />
           </a>
           <figcaption>
-            <em>A new location, light, clothes and expressions, seed 5202. Left to right: from the one original picture, from a sheet's four passport photos, from all six of its photos.</em>
+            <em>A new location, light, clothes and expressions, seed 5202. Left to right: from one photo of the first sheet, from its four passport photos, from all six of its photos.</em>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="fig-link" href="https://pixlstash.dev/assets/minimax-h3-image/fig18_reference_clusters.png">
+            <img
+              src="assets/minimax-h3-image/fig18_reference_clusters.png"
+              width="2080"
+              height="1056"
+              loading="lazy"
+              alt="Cluster plots of face identity: new sheets from 1, 4 and 6 photos overlap, all a similar distance from the first sheet's faces"
+            />
+          </a>
+          <figcaption>
+            <em>Every face's InsightFace identity, PCA per person: the first sheet's six faces (grey rings), the original photo (star), and the new sheets from 1, 4 or 6 of its photos, four seeds each. The three clouds overlap.</em>
           </figcaption>
         </figure>
 
