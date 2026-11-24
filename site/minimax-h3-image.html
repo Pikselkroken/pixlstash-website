@@ -88,7 +88,8 @@
         background: var(--panel);
       }
 
-      .report figcaption {
+      .report figcaption,
+      .report .table-note {
         font-size: 0.9rem;
         color: var(--muted);
         margin-top: 10px;
@@ -593,6 +594,7 @@
         .report th,
         .report h2,
         .report figcaption,
+        .report .table-note,
         .page-hero h1 {
           color: #222 !important;
           background: none !important;
@@ -892,7 +894,7 @@
             />
           </a>
           <figcaption>
-            <em>Same text-only prompt and seed, faces at 1:1. dpmpp_2m and res_multistep break the picture; LCM is clean.</em>
+            <strong>Figure 1. Stock samplers on the official template.</strong> <em>Same text-only prompt and seed, faces at 1:1. dpmpp_2m and res_multistep break the picture; LCM is clean.</em>
           </figcaption>
         </figure>
 
@@ -920,7 +922,7 @@
             />
           </a>
           <figcaption>
-            <em>Same prompt and seed. Left: official template. Right: LCM plus the blank picture. Below: a face at 1:1.</em>
+            <strong>Figure 2. The official template against the fix.</strong> <em>Same prompt and seed. Left: official template. Right: LCM plus the blank picture. Below: a face at 1:1.</em>
           </figcaption>
         </figure>
 
@@ -949,7 +951,7 @@
             />
           </a>
           <figcaption>
-            <em>LCM only (left) against LCM plus the blank picture (right), faces at 1:1.</em>
+            <strong>Figure 3. LCM with and without the blank picture.</strong> <em>LCM only (left) against LCM plus the blank picture (right), faces at 1:1.</em>
           </figcaption>
         </figure>
 
@@ -964,7 +966,7 @@
             />
           </a>
           <figcaption>
-            <em>The blank picture for step 1, steps 1 and 2, and all 6 steps, beside LCM only and euler 1 with the blank picture then LCM 5. Body-photo faces at 1:1, same seed.</em>
+            <strong>Figure 4. How many steps carry the blank picture.</strong> <em>The blank picture for step 1, steps 1 and 2, and all 6 steps, beside LCM only and euler 1 with the blank picture then LCM 5. Body-photo faces at 1:1, same seed.</em>
           </figcaption>
         </figure>
 
@@ -1002,11 +1004,24 @@
             </tbody>
           </table>
         </div>
+        <p class="table-note">
+          <strong>Reading the table.</strong> <em>Similarity across seeds</em>:
+          for each prompt, the cosine similarity between the InsightFace
+          identity vectors of every pair of its 12 faces (66 pairs), averaged,
+          then averaged over the three prompts. 0 is unrelated faces and 1 the
+          same face; face recognition typically puts two photos of one person
+          at 0.5 or more. <em>Against LCM only</em>: the difference from LCM
+          only, with a 95% bootstrap interval (each setup's 12 seeds resampled
+          10,000 times); an interval that does not include 0 is a real
+          difference. <em>Variety given back</em>: how much of the narrowing
+          caused by the blank picture on all 6 steps a setup undoes; 100% would
+          be as varied as LCM only, none as narrow as all 6 steps.
+        </p>
         <p>
           With the blank picture, different seeds draw faces about as alike as
           face recognition expects of two photos of one person: the same frontal
           pose, centre parting and symmetrical face. The three different people
-          also drift toward one face. A grey picture does the same, so the
+          also drift toward one face (Figures 6 and 7). A grey picture does the same, so the
           colour of the picture does not matter, and faint noise in it changes
           nothing. LCM alone narrows a little against euler, far less.
         </p>
@@ -1035,7 +1050,7 @@
             />
           </a>
           <figcaption>
-            <em>1:1 crops between the eyes at 3552 x 4736, seed 3001, the three prompts. Left to right: euler, the blank picture for all 6 steps, for step 1 only.</em>
+            <strong>Figure 5. Step 1 only keeps the skin clean.</strong> <em>1:1 crops between the eyes at 3552 x 4736, seed 3001, the three prompts. Left to right: euler, the blank picture for all 6 steps, for step 1 only.</em>
           </figcaption>
         </figure>
         <p>
@@ -1054,7 +1069,7 @@
             />
           </a>
           <figcaption>
-            <em>The 12 seeds of each prompt. In each block, top to bottom: euler, LCM only, LCM + blank picture.</em>
+            <strong>Figure 6. Twelve seeds per prompt at 1024 x 1024.</strong> <em>The 12 seeds of each prompt. In each block, top to bottom: euler, LCM only, LCM + blank picture.</em>
           </figcaption>
         </figure>
         <figure>
@@ -1068,7 +1083,7 @@
             />
           </a>
           <figcaption>
-            <em>Each face's InsightFace identity, PCA per prompt. The blank picture's faces form a small, tight cloud of their own; ellipses span one standard deviation.</em>
+            <strong>Figure 7. How alike the seeds' faces are, 1024 x 1024.</strong> <em>Each point is one seed's face, placed by its InsightFace identity: the closer two points, the more alike the faces. The axes are the two directions in which that prompt's faces differ most (PCA), so a smaller cloud means less variety; ellipses span one standard deviation. Above each panel: that prompt's similarity across seeds. The blank picture's faces form a small, tight cloud of their own.</em>
           </figcaption>
         </figure>
 
@@ -1099,8 +1114,16 @@
             </tbody>
           </table>
         </div>
+        <p class="table-note">
+          <strong>Reading the table.</strong> The same average over every pair
+          of the 12 seeds, from CLIP ViT-L/14 embeddings of the whole picture
+          rather than face identity, so it also sees framing and background.
+          CLIP rates any two photos of the same kind of subject as alike, so
+          every value sits near 0.9 and the differences are small in absolute
+          terms.
+        </p>
         <p>
-          Barry narrows too. With the blank picture on all six steps every seed
+          Barry narrows too (Figure 8). With the blank picture on all six steps every seed
           draws the same close-up on a dark background; without it, and with it
           for step 1 only, the framing and the setting vary again. In CLIP's
           units the step 1 setting gives back about a third of the narrowing,
@@ -1117,41 +1140,56 @@
             />
           </a>
           <figcaption>
-            <em>Barry the Gnome, 12 seeds. Top to bottom: euler, LCM only, blank picture for all 6 steps, blank picture for step 1 only.</em>
+            <strong>Figure 8. Barry the Gnome.</strong> <em>Barry the Gnome, 12 seeds. Top to bottom: euler, LCM only, blank picture for all 6 steps, blank picture for step 1 only.</em>
           </figcaption>
         </figure>
 
-        <h3>Kijai's node</h3>
+        <h3 id="kijai-node">Kijai's node</h3>
         <p>
-          Kijai's own node, MiniMax H3 Prompt Weight, skips the stock node's
-          resize: its 512 x 512 black picture reaches the encoder as 256 tokens,
-          against the stock node's 1,024. Rerun at 2048 x 2048 with the same
-          prompts and seeds, both narrow the same.
+          Kijai's own node, MiniMax H3 Prompt Weight, builds the blank picture
+          differently in two ways. It skips the stock node's resize, so its
+          512 x 512 black picture reaches the encoder as 256 tokens against the
+          stock node's 1,024. And it encodes the prompt on its own and puts the
+          separately encoded picture in front of it, where the stock node
+          encodes the two together, so the prompt is read with the picture in
+          view. Rerun at 2048 x 2048 with the same prompts and seeds, both
+          narrow the same (Figure 9).
         </p>
         <div class="table-wrap" tabindex="0" role="region" aria-labelledby="kijai-caption">
           <table>
-            <caption id="kijai-caption" class="sr-only">Similarity between seeds at 2048 x 2048: the stock node against Kijai's node</caption>
+            <caption id="kijai-caption" class="sr-only">Similarity between seeds at 2048 x 2048: the stock node against Kijai's node, against LCM only</caption>
             <thead>
               <tr>
-                <th scope="col">Blank picture</th>
-                <th scope="col" class="num">Stock node (1,024 tokens)</th>
-                <th scope="col" class="num">Kijai's node (256 tokens)</th>
+                <th scope="col">Setup, 2048 x 2048</th>
+                <th scope="col" class="num">Similarity across seeds</th>
+                <th scope="col" class="num">Against LCM only (95% interval)</th>
+                <th scope="col" class="num">Variety given back</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>All 6 steps</td><td class="num">0.54</td><td class="num">0.52</td></tr>
-              <tr><td>Step 1 only</td><td class="num">0.22</td><td class="num">0.23</td></tr>
-              <tr><td>None (LCM only)</td><td class="num" colspan="2">0.20</td></tr>
+              <tr><td>LCM only, no blank picture</td><td class="num">0.20</td><td class="num">reference</td><td class="num"></td></tr>
+              <tr><td>Stock node (1,024 tokens), all 6 steps</td><td class="num"><strong>0.54</strong></td><td class="num"><strong>+0.33 (+0.30 to +0.37)</strong></td><td class="num">none</td></tr>
+              <tr><td>Kijai's node (256 tokens), all 6 steps</td><td class="num"><strong>0.52</strong></td><td class="num"><strong>+0.32 (+0.29 to +0.36)</strong></td><td class="num">4%</td></tr>
+              <tr><td>Stock node, step 1 only</td><td class="num">0.22</td><td class="num">+0.02 (-0.02 to +0.06)</td><td class="num"><strong>94%</strong></td></tr>
+              <tr><td>Kijai's node, step 1 only</td><td class="num">0.23</td><td class="num">+0.02 (-0.01 to +0.06)</td><td class="num">93%</td></tr>
+              <tr><td>Kijai's node, his default (to 0.25)</td><td class="num">0.32</td><td class="num">+0.12 (+0.08 to +0.16)</td><td class="num">64%</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="table-note">
+          Columns as in the first table. LCM only uses neither node, so it is
+          one set of pictures and the reference for both.
+        </p>
         <p>
-          The gap is within noise (all 6 steps: -0.01, 95% interval -0.05 to
-          +0.02). What decides is how many steps carry the picture, not how many
-          tokens it has. At 2048 x 2048, step 1 only keeps about 94% of the
-          variety and is not measurably narrower than LCM alone. Kijai's default,
-          steps 1 and 2, keeps 64%. The extra tokens cost time only on the steps
-          that carry them: about 0.1 s per 2048 x 2048 picture on step 1 only.
+          Kijai's node against the stock node on all 6 steps: -0.01, 95%
+          interval -0.05 to +0.02, within noise. Because the two nodes differ
+          in token count and in whether the prompt sees the picture at once,
+          this test cannot say whether either matters on its own; together they
+          make no measurable difference. What does decide is how many steps
+          carry the picture. At 2048 x 2048, step 1 only is not measurably
+          narrower than LCM alone, whichever node supplies it. The picture is
+          encoded once per run, and its tokens cost time only on the steps that
+          carry them: about 0.1 s per 2048 x 2048 picture on step 1 only.
         </p>
         <figure>
           <a class="fig-link" href="assets/minimax-h3-image/fig19_kijai_pca.png">
@@ -1164,7 +1202,7 @@
             />
           </a>
           <figcaption>
-            <em>Blank picture on all 6 steps at 2048 x 2048, 12 seeds per prompt. The stock node's and Kijai's faces form equally tight clouds.</em>
+            <strong>Figure 9. The stock node against Kijai's node, 2048 x 2048.</strong> <em>Read as Figure 7. The blank picture on all 6 steps: the stock node's and Kijai's faces form equally tight, overlapping clouds, well away from LCM only.</em>
           </figcaption>
         </figure>
 
@@ -1188,7 +1226,7 @@
             />
           </a>
           <figcaption>
-            <em>One face at 1:1 per sampler, same text-only prompt and seed. dpmpp_2m and res_multistep break the picture; more euler steps keep more crunch.</em>
+            <strong>Figure 10. One face per sampler.</strong> <em>One face at 1:1 per sampler, same text-only prompt and seed. dpmpp_2m and res_multistep break the picture; more euler steps keep more crunch.</em>
           </figcaption>
         </figure>
 
@@ -1203,7 +1241,7 @@
             />
           </a>
           <figcaption>
-            <em>Euler 6 (left) against euler 1 + LCM 5 (right), faces at 1:1.</em>
+            <strong>Figure 11. Keeping a seed's person.</strong> <em>Euler 6 (left) against euler 1 + LCM 5 (right), faces at 1:1.</em>
           </figcaption>
         </figure>
 
@@ -1262,7 +1300,7 @@
             />
           </a>
           <figcaption>
-            <em>A new location, light, clothes and expressions, seed 5202. Left to right: from one photo of the first sheet, from its four passport photos, from all six of its photos.</em>
+            <strong>Figure 12. One reference photo or several.</strong> <em>A new location, light, clothes and expressions, seed 5202. Left to right: from one photo of the first sheet, from its four passport photos, from all six of its photos.</em>
           </figcaption>
         </figure>
         <figure>
@@ -1276,7 +1314,7 @@
             />
           </a>
           <figcaption>
-            <em>Every face's InsightFace identity, PCA per person: the first sheet's six faces (grey rings), the original photo (star), and the new sheets from 1, 4 or 6 of its photos, four seeds each. The three clouds overlap.</em>
+            <strong>Figure 13. How alike the new sheets' faces are.</strong> <em>Read as Figure 7. Every face's InsightFace identity, PCA per person: the first sheet's six faces (grey rings), the original photo (star), and the new sheets from 1, 4 or 6 of its photos, four seeds each. The three clouds overlap.</em>
           </figcaption>
         </figure>
 
@@ -1291,7 +1329,7 @@
             />
           </a>
           <figcaption>
-            <em>Each reference, then the first photo of a sheet drawn from it with LCM and with euler, seed 3141. The number is that sheet's likeness.</em>
+            <strong>Figure 14. References and the sheets drawn from them.</strong> <em>Each reference, then the first photo of a sheet drawn from it with LCM and with euler, seed 3141. The number is that sheet's likeness.</em>
           </figcaption>
         </figure>
 
@@ -1312,7 +1350,7 @@
                 />
               </a>
               <figcaption>
-                <em>Same seed: the numbered prompt drew digits into the photos (top); listing the views without numbers did not (bottom).</em>
+                <strong>Figure 15. Numbered panels.</strong> <em>Same seed: the numbered prompt drew digits into the photos (top); listing the views without numbers did not (bottom).</em>
               </figcaption>
             </figure>
           </li>
@@ -1346,7 +1384,7 @@
             />
           </a>
           <figcaption>
-            <em>Skin wording from "true-to-life skin" (C) to the final wording (C6), three people, same seed.</em>
+            <strong>Figure 16. Skin wording.</strong> <em>Skin wording from "true-to-life skin" (C) to the final wording (C6), three people, same seed.</em>
           </figcaption>
         </figure>
 
@@ -1361,7 +1399,7 @@
             />
           </a>
           <figcaption>
-            <em>Nine camera and light combinations. Left to right, top to bottom: professional DSLR + studio (the softboxes show), older phone + street light, 35 mm film + golden hour, disposable camera + flash, early camera phone + office, instant photo + summer haze, mirrorless + overcast, phone + winter daylight, professional DSLR + dusk.</em>
+            <strong>Figure 17. Camera and light.</strong> <em>Nine camera and light combinations. Left to right, top to bottom: professional DSLR + studio (the softboxes show), older phone + street light, 35 mm film + golden hour, disposable camera + flash, early camera phone + office, instant photo + summer haze, mirrorless + overcast, phone + winter daylight, professional DSLR + dusk.</em>
           </figcaption>
         </figure>
 
