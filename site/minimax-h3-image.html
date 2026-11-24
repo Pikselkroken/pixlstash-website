@@ -905,7 +905,7 @@
           skin blotchy; more was no better.
         </p>
         <p>
-<strong>The blank picture removes more of it.</strong> It comes from Kijai's "text with empty image" mode in
+<strong>The blank picture removes more of it.</strong> The idea comes from Kijai's "text with empty image" mode in
           <a href="https://github.com/kijai/ComfyUI-KJNodes">ComfyUI-KJNodes</a>. Only text-to-image needs it: edits and reference sheets already have a picture. Kijai's mode shows it for the first 2 of 6 steps, which gives nearly the same picture as all 6. On the sheets, step 1 alone already gave the same look, with slightly less glossy skin.
         </p>
 
@@ -928,8 +928,8 @@
           On the sheets, with the blank picture the unnamed sweater went from saturated teal to
           muted navy, and skin looked warmer and more natural, for all three
           people. It also settles the composition, so every sampler draws much
-          the same picture. Its size hardly matters: 32 x 32, 512 x 512 and 1024
-          x 1024 gave nearly identical pictures.
+          the same picture. Its size does not matter: the stock node scales any
+          picture to a 1024 short edge before the encoder sees it.
         </p>
 
         <p>
@@ -950,21 +950,6 @@
           </a>
           <figcaption>
             <em>LCM only (left) against LCM plus the blank picture (right), faces at 1:1.</em>
-          </figcaption>
-        </figure>
-
-        <figure class="web-only">
-          <a class="fig-link" href="assets/minimax-h3-image/fig8_blank_sizes.jpg">
-            <img
-              src="assets/minimax-h3-image/fig8_blank_sizes.jpg"
-              width="1560"
-              height="1600"
-              loading="lazy"
-              alt="The blank picture at three sizes, body-photo faces at 1:1"
-            />
-          </a>
-          <figcaption>
-            <em>The blank picture at 32 x 32, 512 x 512 and 1024 x 1024: nearly identical. Body-photo faces at 1:1, same seed.</em>
           </figcaption>
         </figure>
 
@@ -1036,8 +1021,8 @@
           render (3552 x 4736), the blank picture for step 1 only gives the same
           clean skin as all six steps, where euler etches it. This is the
           setting PixlStash's text-to-image and sheet workflows use, and the
-          downloadable workflows above, with the blank picture at 32 x 32,
-          since its size makes no difference.
+          downloadable workflows above, with the blank picture at 32 x 32
+          (the node scales it to 1024 x 1024 either way).
         </p>
         <figure>
           <a class="fig-link" href="assets/minimax-h3-image/fig16_4k_step1.jpg">
@@ -1133,6 +1118,53 @@
           </a>
           <figcaption>
             <em>Barry the Gnome, 12 seeds. Top to bottom: euler, LCM only, blank picture for all 6 steps, blank picture for step 1 only.</em>
+          </figcaption>
+        </figure>
+
+        <h3>Kijai's node</h3>
+        <p>
+          Kijai's own node, MiniMax H3 Prompt Weight, skips the stock node's
+          resize: its 512 x 512 black picture reaches the encoder as 256 tokens,
+          against the stock node's 1,024. Rerun at 2048 x 2048 with the same
+          prompts and seeds, both narrow the same.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="kijai-caption">
+          <table>
+            <caption id="kijai-caption" class="sr-only">Similarity between seeds at 2048 x 2048: the stock node against Kijai's node</caption>
+            <thead>
+              <tr>
+                <th scope="col">Blank picture</th>
+                <th scope="col" class="num">Stock node (1,024 tokens)</th>
+                <th scope="col" class="num">Kijai's node (256 tokens)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>All 6 steps</td><td class="num">0.54</td><td class="num">0.52</td></tr>
+              <tr><td>Step 1 only</td><td class="num">0.22</td><td class="num">0.23</td></tr>
+              <tr><td>None (LCM only)</td><td class="num" colspan="2">0.20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The gap is within noise (all 6 steps: -0.01, 95% interval -0.05 to
+          +0.02). What decides is how many steps carry the picture, not how many
+          tokens it has. At 2048 x 2048, step 1 only keeps about 94% of the
+          variety and is not measurably narrower than LCM alone. Kijai's default,
+          steps 1 and 2, keeps 64%. The extra tokens cost time only on the steps
+          that carry them: about 0.1 s per 2048 x 2048 picture on step 1 only.
+        </p>
+        <figure>
+          <a class="fig-link" href="assets/minimax-h3-image/fig19_kijai_pca.png">
+            <img
+              src="assets/minimax-h3-image/fig19_kijai_pca.png"
+              width="2160"
+              height="643"
+              loading="lazy"
+              alt="InsightFace identity per prompt at 2048 x 2048: the stock node's and Kijai's faces on all six steps form equally tight clouds, away from LCM only"
+            />
+          </a>
+          <figcaption>
+            <em>Blank picture on all 6 steps at 2048 x 2048, 12 seeds per prompt. The stock node's and Kijai's faces form equally tight clouds.</em>
           </figcaption>
         </figure>
 
