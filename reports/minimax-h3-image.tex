@@ -1,0 +1,318 @@
+% Source of site/minimax-h3-image.pdf. Keep it in step with site/minimax-h3-image.html.
+% Build from this folder: pdflatex minimax-h3-image.tex (twice, for the references),
+% then copy minimax-h3-image.pdf to ../site/.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.6cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{float}
+
+\graphicspath{{../site/assets/minimax-h3-image/}}
+\setlist{itemsep=0.3em,topsep=0.4em}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\urlstyle{same}
+
+% One quiet line of branding, in the footer.
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\footnotesize\color{gray}PixlStash \textperiodcentered{} pixlstash.dev}
+\fancyfoot[R]{\footnotesize\thepage}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[L]{\footnotesize\color{gray}PixlStash \textperiodcentered{} pixlstash.dev}%
+  \fancyfoot[R]{\footnotesize\thepage}}
+
+% A figure that can never be squashed: width-bound, aspect ratio kept.
+\newcommand{\fig}[4]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=#2\textheight,keepaspectratio]{#1}
+    \caption{\textbf{#3.} #4}
+  \end{figure}}
+
+\title{\textbf{MiniMax H3 Image without the crunch}\\[0.4em]
+  \large Getting clean, natural photos out of ComfyUI}
+\author{PixlStash Maintainer}
+\date{Revision 2 \textperiodcentered{} 24 November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent ComfyUI's official template for MiniMax H3 Image produces crunchy, over-sharpened skin: etched freckles, wiry hair and loud colour. Two changes with stock nodes fix most of it, a sampler swap and a blank picture in the conditioning, and the prompt takes care of the rest. These tests were made to give the MiniMax H3 Image workflows in PixlStash~\cite{pixlstash} good defaults. A workflow PixlStash ships has to give a good picture to anyone who presses Run, so it starts from sensible plug-and-play defaults, with the choices that matter most as options. A custom workflow, in ComfyUI or in PixlStash, which runs any ComfyUI workflow, can make other trade-offs for the job at hand. That is why the tests are shared: they show what each choice does, so you can make your own. They build on community work, credited throughout.
+\end{abstract}
+
+\section{The fix in short}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L L l}
+\toprule
+\textbf{Change} & \textbf{Effect} & \textbf{Use for} \\
+\midrule
+SamplerLCM: \texttt{s\_noise} 1.10 to 0.90, simple scheduler, 6 steps, CFG 1 & Most of the crunch gone & Everything \\
+A blank $32\times32$ \texttt{EmptyImage} into \texttt{image\_1}, no VAE, for step 1 only (\texttt{ConditioningSetTimestepRange} 0 to 0.1, a text-only encoder for the rest) & Less crunch, and most of the variety kept & Text-to-image only \\
+Describe camera, light and skin; drop ``photorealistic'' & Less airbrushed skin & Every prompt \\
+Describe grid panels instead of numbering them & No digits drawn into the photos & Sheets and grids \\
+\bottomrule
+\end{tabularx}
+\caption{The changes, what each one does, and where it applies.}
+\end{table}
+
+\noindent What did not help: a 16\,MP canvas instead of 4\,MP, or the smaller nvfp4 text encoder instead of int8. The samplers dpmpp\_2m and res\_multistep break the picture outright (Figure~\ref{fig:broken}).
+
+\section{Method}
+
+Each comparison changes exactly one thing. Prompt, seed and canvas stay the same, and faces are compared as 1:1 crops, since crunch only shows at full resolution. Whenever a workflow was rebuilt in a different form, it was first checked to reproduce the original pixel for pixel. Likeness to a reference picture is scored with InsightFace face recognition. Most tests are $5280\times3168$ character sheets of three people: a young woman with freckles, a bearded man in his forties and a woman with a black bob. All runs use the official int8 model files.
+
+\section{The official template}
+
+The template samples with euler and the simple scheduler for 6 steps, which is the right number for this model as it ships, so more steps are not the fix. At 1:1 the result looks etched: blotchy freckles, gritty skin, wiry hair and oversaturated colour. Two obvious suspects turned out innocent. A 16\,MP canvas only makes the same crunch bigger, and the nvfp4 text encoder (15.7\,GB against 27\,GB for int8) looks the same. The sampler is the cause. Swapping euler for another stock sampler does not help, though: dpmpp\_2m and res\_multistep break the picture completely.
+
+\fig{fig11_broken_samplers.jpg}{0.32}{Stock samplers on the official template}{Same text-only prompt and seed, faces at 1:1. dpmpp\_2m and res\_multistep break the picture; LCM is clean.\label{fig:broken}}
+
+\section{LCM and the blank picture}
+
+\paragraph{SamplerLCM removes most of the crunch.} The settings come from u/LilBrownBebeShoes's 20MP workflow on r/StableDiffusion~\cite{reddit,reddit-workflow}, which credits Kijai's testing on Discord. Going below 1.10 to 0.90 turned skin blotchy; going above was no better.
+
+\paragraph{The blank picture removes more of it and calms colour and skin tone.} The idea comes from Kijai's ``text with empty image'' mode in ComfyUI-KJNodes~\cite{kjnodes}, also written up by Furkan G\"oz\"ukara~\cite{furkan} and ported by igorls~\cite{igorls}. Only text-to-image needs it, since edits and reference sheets already have a picture there. With it, the unspecified sweater goes from saturated teal to muted navy and skin looks warmer and more natural, for all three people. It also settles the composition, so every sampler draws much the same picture.
+
+Two details turned out not to matter. The size of the blank picture: the stock node scales any picture to a 1024 short edge before the encoder sees it. And Kijai's mode only shows the picture for the first 2 of the 6 steps, which looks almost the same as keeping it for all 6. Even step 1 alone gives the colour fix, with slightly less glossy skin.
+
+\paragraph{A caveat.} LCM and the blank picture also steer the model toward a safer, more standard look. Faces, styling and composition come out more alike and less interesting, so some character leaves with the crunch. The blank picture does so strongly: measured in the next section.
+
+
+\fig{fig1_official_vs_fixed.jpg}{0.46}{The official template against the fix}{Same prompt and seed. Left: the official template. Right: LCM plus the blank picture. Below: the same face at 1:1.}
+
+\fig{fig4_blank_picture.jpg}{0.5}{LCM with and without the blank picture}{LCM only (left) against LCM plus the blank picture (right), three people, faces at 1:1.}
+
+\fig{fig10_blank_steps.jpg}{0.3}{How many steps carry the blank picture}{The blank picture for step 1, steps 1 and 2, and all 6 steps, beside LCM only and euler 1 with the blank picture then LCM 5. Body-photo faces at 1:1, same seed.}
+
+\section{The blank picture narrows the output}
+\label{sec:narrowing}
+
+The blank picture has a price: kept for all six steps, it pulls every seed toward the same person. To measure that rather than judge it by eye, the test was written down before any picture was made. Three lightly steered prompts (``a red-haired European woman in her mid twenties'', ``a Southeast Asian man in his fifties'', ``a Black woman in her forties'', each ``head and shoulders, looking at the camera''), 12 seeds each, the same seeds for every setup, $1024\times1024$. InsightFace identity similarity between the faces of different seeds measures how alike the seeds come out: higher is narrower.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{X r r r}
+\toprule
+Setup & Similarity & Against LCM only & Variety given back \\
+\midrule
+euler (official) & 0.14 & $-0.07$ ($-0.11$ to $-0.04$) & \\
+LCM only & 0.21 & reference & \\
+LCM + blank picture, all 6 steps & \textbf{0.54} & \textbf{$+0.33$ ($+0.30$ to $+0.36$)} & none \\
+LCM + grey blank picture & 0.52 & $+0.32$ ($+0.28$ to $+0.35$) & 4\% \\
+LCM + blank picture, step 1 only & 0.31 & $+0.10$ ($+0.06$ to $+0.14$) & \textbf{69\%} \\
+LCM + blank picture, steps 3 to 6 & 0.46 & $+0.25$ ($+0.21$ to $+0.28$) & 24\% \\
+LCM + grey picture with faint noise & 0.53 & $+0.33$ ($+0.29$ to $+0.36$) & 1\% \\
+\bottomrule
+\end{tabularx}
+\caption{InsightFace similarity between the faces of different seeds, averaged over the three prompts.}
+\label{tab:narrowing}
+\end{table}
+
+\noindent{\small\textbf{Reading the table.} \emph{Similarity}: for each prompt, the cosine similarity between the InsightFace identity vectors of every pair of its 12 faces (66 pairs), averaged, then averaged over the three prompts. 0 is unrelated faces and 1 the same face; face recognition typically puts two photos of one person at 0.5 or more. \emph{Against LCM only}: the difference from LCM only, with a 95\% bootstrap interval (each setup's 12 seeds resampled 10,000 times); an interval that does not include 0 is a real difference. \emph{Variety given back}: how much of the narrowing caused by the blank picture on all 6 steps a setup undoes; 100\% would be as varied as LCM only, none as narrow as all 6 steps.\par}
+\medskip
+
+With the blank picture, different seeds draw faces about as alike as face recognition expects of two photos of one person: the same frontal pose, centre parting and symmetrical face. The three different people also drift toward one face (Figures~\ref{fig:faces} and~\ref{fig:pca}). A grey picture does the same, so the colour of the picture does not matter, and faint noise in it changes nothing. LCM alone narrows a little against euler, far less.
+
+\paragraph{The blank picture for step 1 only gives back about 70\% of the lost variety.} Moving it to steps 3 to 6 gives back only a quarter: with six steps, the face is still being settled after the first two.
+
+\paragraph{And it keeps the skin clean.} At the size people render ($3552\times4736$), the blank picture for step 1 only gives the same clean skin as all six steps, where euler etches it. This is the setting PixlStash's text-to-image and sheet workflows use, and the downloadable workflows, with the blank picture at $32\times32$ (the node scales it to $1024\times1024$ either way).
+
+\fig{fig16_4k_step1.jpg}{0.5}{Step 1 only keeps the skin clean}{1:1 crops between the eyes at $3552\times4736$, seed 3001, the three prompts. Left to right: euler, the blank picture for all 6 steps, for step 1 only.}
+
+\paragraph{Colour.} On these portraits the blank picture did not lower saturation (mean CIELAB chroma 13.4 without it, 14.4 with it), so the calmer colour seen on the sheets is not confirmed as a general effect.
+
+\fig{fig13_narrowing_faces.jpg}{0.9}{Twelve seeds per prompt at $1024\times1024$}{The 12 seeds of each prompt. In each block, top to bottom: euler, LCM only, LCM plus the blank picture.\label{fig:faces}}
+
+\fig{fig12_narrowing_pca.png}{0.95}{How alike the seeds' faces are, $1024\times1024$}{Each point is one seed's face, placed by its InsightFace identity: the closer two points, the more alike the faces. The axes are the two directions in which that prompt's faces differ most (PCA), so a smaller cloud means less variety; ellipses span one standard deviation. Above each panel: that prompt's similarity across seeds. The blank picture's faces form a small, tight cloud of their own.\label{fig:pca}}
+
+\subsection*{Barry the Gnome}
+
+A fourth test subject anyone can reuse: ``A photo of Barry the Gnome, a ceramic garden gnome with blue eyes, a red hat and a full white beard, with a belly and a belt, head and shoulders, looking at the camera.'' InsightFace does poorly on faces that are not realistic, so Barry is compared with whole-picture CLIP similarity instead (higher is narrower). Same 12 seeds.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{X r r}
+\toprule
+Setup & CLIP similarity & Against LCM only \\
+\midrule
+euler (official) & 0.877 & $-0.004$ ($-0.039$ to $+0.031$) \\
+LCM only & 0.881 & reference \\
+LCM + blank picture, all 6 steps & \textbf{0.923} & \textbf{$+0.042$ ($+0.013$ to $+0.070$)} \\
+LCM + blank picture, step 1 only & 0.909 & $+0.029$ ($-0.005$ to $+0.061$) \\
+\bottomrule
+\end{tabularx}
+\caption{Barry the Gnome: whole-picture CLIP similarity between seeds.}
+\end{table}
+
+\noindent{\small\textbf{Reading the table.} The same average over every pair of the 12 seeds, from CLIP ViT-L/14 embeddings of the whole picture rather than face identity, so it also sees framing and background. CLIP rates any two photos of the same kind of subject as alike, so every value sits near 0.9 and the differences are small in absolute terms.\par}
+\medskip
+
+Barry narrows too (Figure~\ref{fig:barry}). With the blank picture on all six steps every seed draws the same close-up on a dark background; without it, and with it for step 1 only, the framing and the setting vary again. In CLIP's units the step 1 setting gives back about a third of the narrowing, and its interval no longer excludes LCM only.
+
+\fig{fig14_barry.jpg}{0.95}{Barry the Gnome}{Barry the Gnome, 12 seeds. Top to bottom: euler, LCM only, blank picture for all 6 steps, blank picture for step 1 only.\label{fig:barry}}
+
+\subsection*{Kijai's node}
+
+Kijai's own node, MiniMax H3 Prompt Weight, builds the blank picture differently in two ways. It skips the stock node's resize, so its $512\times512$ black picture reaches the encoder as 256 tokens against the stock node's 1,024. And it encodes the prompt on its own and puts the separately encoded picture in front of it, where the stock node encodes the two together, so the prompt is read with the picture in view. Rerun at $2048\times2048$ with the same prompts and seeds, both narrow the same (Table~\ref{tab:kijai}, Figure~\ref{fig:kijai}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{X r r r}
+\toprule
+Setup, $2048\times2048$ & Similarity & Against LCM only & Variety given back \\
+\midrule
+LCM only, no blank picture & 0.20 & reference & \\
+Stock node (1,024 tokens), all 6 steps & \textbf{0.54} & \textbf{$+0.33$ ($+0.30$ to $+0.37$)} & none \\
+Kijai's node (256 tokens), all 6 steps & \textbf{0.52} & \textbf{$+0.32$ ($+0.29$ to $+0.36$)} & 4\% \\
+Stock node, step 1 only & 0.22 & $+0.02$ ($-0.02$ to $+0.06$) & \textbf{94\%} \\
+Kijai's node, step 1 only & 0.23 & $+0.02$ ($-0.01$ to $+0.06$) & 93\% \\
+Kijai's node, his default (to 0.25) & 0.32 & $+0.12$ ($+0.08$ to $+0.16$) & 64\% \\
+\bottomrule
+\end{tabularx}
+\caption{The stock node against Kijai's node. Columns as in Table~\ref{tab:narrowing}. LCM only uses neither node, so it is one set of pictures and the reference for both.}
+\label{tab:kijai}
+\end{table}
+
+Kijai's node against the stock node on all 6 steps: $-0.01$, 95\% interval $-0.05$ to $+0.02$, within noise. Because the two nodes differ in token count and in whether the prompt sees the picture at once, this test cannot say whether either matters on its own; together they make no measurable difference. What does decide is how many steps carry the picture. At $2048\times2048$, step 1 only is not measurably narrower than LCM alone, whichever node supplies it. The picture is encoded once per run, and its tokens cost time only on the steps that carry them: about 0.1\,s per $2048\times2048$ picture on step 1 only.
+
+\fig{fig19_kijai_pca.png}{0.95}{The stock node against Kijai's node, $2048\times2048$}{Read as Figure~\ref{fig:pca}. The blank picture on all 6 steps: the stock node's and Kijai's faces form equally tight, overlapping clouds, well away from LCM only.\label{fig:kijai}}
+
+\section{Keeping a seed's person}
+
+The fix changes the person a seed draws, which is a problem for anyone with a picture worth keeping. A small trick helps: run euler for the first step and LCM for the other five, with \texttt{SplitSigmas} at step 1 and \texttt{DisableNoise} on the LCM part. The first step settles who the person is, and LCM redraws the texture. The person stays and the worst crunch goes, but the picture is not fully rescued, so treat it as a salvage rather than the fix. More euler steps keep more of the crunch.
+
+\fig{fig2_samplers.jpg}{0.3}{One face per sampler}{One face at 1:1 per sampler, same text-only prompt and seed. dpmpp\_2m and res\_multistep break the picture; more euler steps keep more crunch.}
+
+\fig{fig3_euler_vs_split.jpg}{0.34}{Keeping a seed's person}{Euler for all 6 steps (left) against euler for 1 step and LCM for 5 (right), same prompt and seed, faces at 1:1.}
+
+\section{Sheets from a reference picture}
+
+When a sheet is drawn from a reference picture, the person comes from that picture, so likeness matters most. Two people, two reference pictures each, four seeds, LCM against euler. Table~\ref{tab:likeness} gives InsightFace similarity to the reference face, averaged over the six photos of a sheet and the four seeds; higher is closer.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Reference} & \textbf{LCM} & \textbf{euler (official)} \\
+\midrule
+Woman, reference 1 & \textbf{0.64} & 0.60 \\
+Woman, reference 2 & \textbf{0.69} & 0.66 \\
+Man, reference 1 & \textbf{0.67} & 0.63 \\
+Man, reference 2 & \textbf{0.73} & 0.70 \\
+\bottomrule
+\end{tabular}
+\caption{Likeness to the reference face.}
+\label{tab:likeness}
+\end{table}
+
+\paragraph{LCM keeps the person better than euler every time:} it scores higher in all 16 pairs of the same reference and seed. The reference picture matters more than the sampler, though: each person's second reference scores clearly higher than the first, with either sampler.
+
+\paragraph{Euler keeps a little more skin detail, though.} With a picture to work from it does not bring the crunch back, and freckles and pores come out a touch crisper, at that small cost in likeness. So PixlStash offers the choice wherever a picture goes in (sheets from a reference, edit and inpaint): LCM by default, Euler one click away.
+
+\paragraph{One good picture is enough.} MiniMax H3 Image takes up to a hundred pictures, so the obvious next step is to feed a sheet's own photos back in for the next one. Tested fairly: from one first sheet, one of its photos, its four passport photos or all six, the same prompt and four new seeds each, with a new location, light, clothes and expressions none of the photos show. The number of photos hardly mattered. Every version drew genuinely new photos of the same person, not the inputs on a new background; against the first sheet's six faces the median likeness was 0.44 to 0.48 for the woman and 0.50 to 0.51 for the man whichever was used, and the three clouds of faces sit on top of each other. What moves the faces away from the first sheet is the new scene and the harder expressions, not the references. Six photos bought one small thing, a better worst face for the woman (0.32 against 0.25), and in a blind side-by-side the versions could not be told apart. The advice: one good, near-frontal picture is enough, and PixlStash's sheets take one.
+
+\fig{fig17_one_or_more.jpg}{0.95}{One reference photo or several}{A new location, light, clothes and expressions, seed 5202. Left to right: from one photo of the first sheet, from its four passport photos, from all six of its photos.}
+
+\fig{fig18_reference_clusters.png}{0.95}{How alike the new sheets' faces are}{Read as Figure~\ref{fig:pca}. Every face's InsightFace identity, PCA per person: the first sheet's six faces (grey rings), the original photo (star), and the new sheets from 1, 4 or 6 of its photos, four seeds each. The three clouds overlap.}
+
+\fig{fig15_reference.jpg}{0.55}{References and the sheets drawn from them}{Each reference, then the first photo of a sheet drawn from it with LCM and with euler, seed 3141. The number is that sheet's likeness.}
+
+\section{The prompt}
+
+With the sampler sorted, the prompt does the rest.
+
+\begin{itemize}
+\item \textbf{Numbered panels get drawn.} ``(1)'' to ``(6)'' in a sheet prompt showed up as digits in the photos. Listing the views without numbers stopped it.
+\item \textbf{Describe the photo, not its quality.} ``Photorealistic'' pulls toward a render. Words about the camera, the light and the skin pull toward a photo.
+\item \textbf{Skin.} Asking for ``true-to-life skin'' gave airbrushed faces. Describing the texture fixed that but aged everyone a few years. The wording that kept the realism without the ageing was: \emph{``real skin with its natural texture and a little shine, a few small marks, no makeup, no beauty filter, nothing airbrushed, smoothed, retouched or sharpened, a touch of sensor noise and a few flyaway hairs.''}
+\item \textbf{Light words work.} Golden hour, street light, flash, office, overcast, winter and dusk all came through. ``Early camera phone'' and ``Polaroid'' barely registered. ``Pores'' ages young faces, makeup feminises men, and ``softbox'' draws the softbox.
+\end{itemize}
+
+\fig{fig9_panel_numbers.jpg}{0.42}{Numbered panels}{Same seed: the numbered prompt drew digits into the photos (top); listing the views without numbers did not (bottom).}
+
+\fig{fig6_photo_look.jpg}{0.36}{Skin wording}{Skin wording from ``true-to-life skin'' (C) to the final wording (C6), three people, same seed.}
+
+\fig{fig7_camera_light.jpg}{0.55}{Camera and light}{Nine camera and light combinations. Left to right, top to bottom: professional DSLR + studio (the softboxes show), older phone + street light, 35\,mm film + golden hour, disposable camera + flash, early camera phone + office, instant photo + summer haze, mirrorless + overcast, phone + winter daylight, professional DSLR + dusk.}
+
+\section{In PixlStash and in plain ComfyUI}
+
+PixlStash v2.0.2 uses LCM in its MiniMax H3 Image text-to-image and sheet workflows, with a $32\times32$ blank picture for step 1 wherever there is no input picture. Its inpaint workflow uses LCM too. An optional Photo look adds camera, light and skin lines at run time, without touching the user's prompt. Stock-node workflows for plain ComfyUI are listed below.
+
+\section{Limits}
+
+These are careful comparisons, not a benchmark. Each uses one or two seeds and two or three people, mostly portraits, and everything except likeness was judged by eye. Not tested: other schedulers, and LCM for edits and inpainting. Every test runs the model's own 6 steps.
+
+\section*{Workflows and model files}
+\addcontentsline{toc}{section}{Workflows and model files}
+
+All workflows are ComfyUI API-format JSON files: drag one onto ComfyUI, or open it from the Workflow menu. They are listed on the web version of this article~\cite{web}.
+
+\paragraph{Stock ComfyUI nodes.}
+\begin{itemize}
+\item Text to image: SamplerLCM 1.10 to 0.90, simple scheduler, 6 steps, a blank $32\times32$ picture for step 1, $3552\times4736$.\\
+\url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-t2i.json}
+\item Keep a seed: one euler step, then five LCM steps, text only.\\
+\url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-keep-a-seed.json}
+\item Character sheet from a reference picture: LCM, $5280\times3168$, the sheet prompt without panel numbers; load the reference picture into the \texttt{LoadImage} node.\\
+\url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-from-reference.json}
+\end{itemize}
+
+\paragraph{PixlStash nodes} (load models through PixlStash; the nodes come with the PixlStash desktop app~\cite{comfyui-pixlstash}).
+\begin{itemize}
+\item Text to image: \url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-t2i-pixlstash.json}
+\item Character sheet: \url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-pixlstash.json}
+\item Character sheet from a reference picture:\\
+\url{https://pixlstash.dev/assets/minimax-h3-image/workflows/minimax-h3-image-sheet-from-reference-pixlstash.json}
+\end{itemize}
+
+\paragraph{Model files} (the official ones, as in ComfyUI's own template).
+\begin{itemize}
+\item Diffusion model, into \texttt{models/diffusion\_models}:\\
+\url{https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors}
+\item Text encoder, into \texttt{models/text\_encoders}:\\
+\url{https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors}
+\item VAE, into \texttt{models/vae}:\\
+\url{https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors}
+\end{itemize}
+
+\section*{Credits}
+
+Thanks to u/LilBrownBebeShoes for the 20MP workflow that was the starting point~\cite{reddit}; to Kijai for the LCM settings, as credited in that post, and for the empty-image method~\cite{kjnodes}; to Furkan G\"oz\"ukara~\cite{furkan}, igorls~\cite{igorls}, PixelAI Labs~\cite{pixelai} and vyrekai~\cite{vyrekai} for related write-ups and workflows; and to MiniMax for releasing MiniMax H3 Image as open weights~\cite{minimax}.
+
+\begin{thebibliography}{99}
+\small
+\bibitem{pixlstash} PixlStash. \url{https://pixlstash.dev}
+\bibitem{web} MiniMax H3 Image without the crunch, web version with workflows. \url{https://pixlstash.dev/minimax-h3-image.html}
+\bibitem{reddit} u/LilBrownBebeShoes. MiniMax H3 Image 20MP Workflow. r/StableDiffusion, November 2026. \url{https://www.reddit.com/r/StableDiffusion/comments/1xt9ocv/minimax_h3_image_20mp_workflow/}
+\bibitem{reddit-workflow} u/LilBrownBebeShoes. Minimax-H3-Image-20MP workflow file. \url{https://huggingface.co/buckets/n8te0/diffusion/tree/Minimax-H3-Image-20MP/Minimax-H3-Image-20MP.json}
+\bibitem{kjnodes} Kijai. ComfyUI-KJNodes. \url{https://github.com/kijai/ComfyUI-KJNodes}
+\bibitem{furkan} Furkan G\"oz\"ukara. New MiniMax H3 Image preset improves errors in tiny details significantly. DEV Community, November 2026. \url{https://dev.to/furkangozukara/new-minimax-h3-image-preset-improves-errors-in-tiny-details-significantly-2ob}
+\bibitem{igorls} igorls. comfyui-h3-sampler. \url{https://github.com/igorls/comfyui-h3-sampler}
+\bibitem{pixelai} PixelAI Labs. MiniMax H3 Image ComfyUI: 3 fixes for real skin. November 2026. \url{https://pixelailabs.com/blog/minimax-h3-image-comfyui-realistic-photos}
+\bibitem{vyrekai} vyrekai. MiniMax H3 Image ComfyUI workflows. \url{https://huggingface.co/vyrekai/minimax-h3-image-comfyui-workflows}
+\bibitem{comfyui-pixlstash} PixlStash and ComfyUI. \url{https://pixlstash.dev/comfyui.html}
+\bibitem{minimax} MiniMax. MiniMax-H3-Image. \url{https://github.com/MiniMax-AI/MiniMax-H3-Image}
+\end{thebibliography}
+
+\end{document}
